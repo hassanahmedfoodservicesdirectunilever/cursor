@@ -20,6 +20,37 @@ Use trainer deck for delivery, and participant deck for sharing after session.
 
 ---
 
+## Recommended video links (for self-learning)
+
+Use these links for homework after training:
+
+1. Cursor AI beginner tutorial  
+   https://www.youtube.com/results?search_query=Cursor+AI+beginner+tutorial
+2. Cursor MCP setup tutorial  
+   https://www.youtube.com/results?search_query=Cursor+MCP+setup+tutorial
+3. Model Context Protocol explained  
+   https://www.youtube.com/results?search_query=Model+Context+Protocol+explained
+4. Anthropic MCP tutorial  
+   https://www.youtube.com/results?search_query=Anthropic+MCP+tutorial
+5. Jira REST API tutorial  
+   https://www.youtube.com/results?search_query=Jira+REST+API+tutorial+developers
+6. Figma API tutorial  
+   https://www.youtube.com/results?search_query=Figma+API+tutorial+for+developers
+7. Bitbucket API tutorial  
+   https://www.youtube.com/results?search_query=Bitbucket+API+tutorial
+8. Prompt engineering for developers  
+   https://www.youtube.com/results?search_query=Prompt+engineering+for+software+developers
+9. AI agent workflow tutorials  
+   https://www.youtube.com/results?search_query=AI+agent+workflow+tutorial+developers
+10. Build MCP server in Python  
+    https://www.youtube.com/results?search_query=Build+MCP+server+Python+tutorial
+11. API token security best practices  
+    https://www.youtube.com/results?search_query=API+token+security+best+practices
+12. LLM governance for enterprise  
+    https://www.youtube.com/results?search_query=LLM+governance+for+enterprise+teams
+
+---
+
 ## What is the goal?
 
 Use Cursor with MCP so developers can:

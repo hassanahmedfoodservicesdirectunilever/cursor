@@ -21,6 +21,21 @@ TRAINER_OUTPUT_FILE = ROOT / "Solution_Assessment_Cursor_AI_Capabilities_Integra
 CANVAS_W = 2400
 CANVAS_H = 1350
 
+VIDEO_LINKS = [
+    ("Cursor AI beginner tutorial", "https://www.youtube.com/results?search_query=Cursor+AI+beginner+tutorial"),
+    ("Cursor MCP setup tutorial", "https://www.youtube.com/results?search_query=Cursor+MCP+setup+tutorial"),
+    ("Model Context Protocol explained", "https://www.youtube.com/results?search_query=Model+Context+Protocol+explained"),
+    ("Anthropic MCP tutorial", "https://www.youtube.com/results?search_query=Anthropic+MCP+tutorial"),
+    ("Jira REST API tutorial", "https://www.youtube.com/results?search_query=Jira+REST+API+tutorial+developers"),
+    ("Figma API tutorial", "https://www.youtube.com/results?search_query=Figma+API+tutorial+for+developers"),
+    ("Bitbucket API tutorial", "https://www.youtube.com/results?search_query=Bitbucket+API+tutorial"),
+    ("Prompt engineering for developers", "https://www.youtube.com/results?search_query=Prompt+engineering+for+software+developers"),
+    ("AI agent workflow tutorials", "https://www.youtube.com/results?search_query=AI+agent+workflow+tutorial+developers"),
+    ("Build MCP server in Python", "https://www.youtube.com/results?search_query=Build+MCP+server+Python+tutorial"),
+    ("API token security best practices", "https://www.youtube.com/results?search_query=API+token+security+best+practices"),
+    ("LLM governance for enterprise", "https://www.youtube.com/results?search_query=LLM+governance+for+enterprise+teams"),
+]
+
 
 def load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     candidates = [
@@ -697,6 +712,45 @@ def add_code_block(slide, code_lines, x=0.55, y=1.75, w=12.2, h=5.2, font_size=1
         p.space_before = Pt(0)
 
 
+def add_video_links_slide(
+    prs: Presentation,
+    blank_layout,
+    title: str,
+    subtitle: str,
+    links,
+) -> None:
+    slide = prs.slides.add_slide(blank_layout)
+    add_title_block(slide, title, subtitle)
+
+    left = links[: len(links) // 2]
+    right = links[len(links) // 2 :]
+
+    def add_link_column(col_links, x, y, w, h, start_index):
+        box = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
+        tf = box.text_frame
+        tf.clear()
+        tf.word_wrap = True
+        line_idx = 0
+        for idx, (label, url) in enumerate(col_links, start=start_index):
+            p = tf.paragraphs[0] if line_idx == 0 else tf.add_paragraph()
+            p.text = f"{idx}. {label}"
+            p.font.size = Pt(17)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(32, 52, 88)
+            p.space_after = Pt(0)
+            line_idx += 1
+
+            p2 = tf.add_paragraph()
+            p2.text = url
+            p2.font.size = Pt(12)
+            p2.font.color.rgb = RGBColor(24, 88, 171)
+            p2.space_after = Pt(8)
+            line_idx += 1
+
+    add_link_column(left, x=0.55, y=1.55, w=6.1, h=5.75, start_index=1)
+    add_link_column(right, x=6.75, y=1.55, w=6.05, h=5.75, start_index=len(left) + 1)
+
+
 def build_participant_presentation(images: dict, output_file: Path) -> None:
     prs = Presentation()
     prs.slide_width = Inches(13.333)
@@ -1147,7 +1201,16 @@ def build_participant_presentation(images: dict, output_file: Path) -> None:
     )
     add_image(slide, images["roadmap"], x=5.95, y=1.23, w=7.15)
 
-    # 23) Final checklist
+    # 23) Video links
+    add_video_links_slide(
+        prs,
+        blank,
+        title="Recommended video links for self-learning",
+        subtitle="Share these with the team after training for continued practice.",
+        links=VIDEO_LINKS,
+    )
+
+    # 24) Final checklist
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Final checklist for trainer and team")
     add_bullets(
@@ -1438,7 +1501,16 @@ def build_trainer_presentation(images: dict, output_file: Path) -> None:
     )
     add_image(slide, images["roadmap"], x=5.95, y=1.23, w=7.15)
 
-    # 15) Final trainer checklist
+    # 15) Video links for homework
+    add_video_links_slide(
+        prs,
+        blank,
+        title="Recommended video links (share as homework)",
+        subtitle="Use these links to support practice after the 45-minute session.",
+        links=VIDEO_LINKS,
+    )
+
+    # 16) Final trainer checklist
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Trainer checklist (before, during, after)")
     add_bullets(
