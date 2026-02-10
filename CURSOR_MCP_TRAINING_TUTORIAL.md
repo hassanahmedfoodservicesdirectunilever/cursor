@@ -5,6 +5,21 @@ Your team can copy, run, and learn quickly.
 
 ---
 
+## Decks you now have
+
+1. **Participant deck (full spoon-feed)**  
+   `Solution_Assessment_Cursor_AI_Capabilities_Integration_Review_Participant.pptx`
+
+2. **Trainer deck (45-minute version)**  
+   `Solution_Assessment_Cursor_AI_Capabilities_Integration_Review_Trainer_45min.pptx`
+
+3. **Legacy file name (same as participant deck)**  
+   `Solution_Assessment_Cursor_AI_Capabilities_Integration_Review.pptx`
+
+Use trainer deck for delivery, and participant deck for sharing after session.
+
+---
+
 ## What is the goal?
 
 Use Cursor with MCP so developers can:

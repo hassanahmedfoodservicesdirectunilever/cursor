@@ -1,6 +1,7 @@
 from datetime import datetime
 from math import atan2, cos, sin
 from pathlib import Path
+from shutil import copyfile
 from textwrap import fill
 
 from PIL import Image, ImageDraw, ImageFont
@@ -13,7 +14,9 @@ from pptx.util import Inches, Pt
 
 ROOT = Path(__file__).parent
 ASSETS_DIR = ROOT / "presentation_assets"
-OUTPUT_FILE = ROOT / "Solution_Assessment_Cursor_AI_Capabilities_Integration_Review.pptx"
+LEGACY_OUTPUT_FILE = ROOT / "Solution_Assessment_Cursor_AI_Capabilities_Integration_Review.pptx"
+PARTICIPANT_OUTPUT_FILE = ROOT / "Solution_Assessment_Cursor_AI_Capabilities_Integration_Review_Participant.pptx"
+TRAINER_OUTPUT_FILE = ROOT / "Solution_Assessment_Cursor_AI_Capabilities_Integration_Review_Trainer_45min.pptx"
 
 CANVAS_W = 2400
 CANVAS_H = 1350
@@ -694,7 +697,7 @@ def add_code_block(slide, code_lines, x=0.55, y=1.75, w=12.2, h=5.2, font_size=1
         p.space_before = Pt(0)
 
 
-def build_presentation(images: dict) -> None:
+def build_participant_presentation(images: dict, output_file: Path) -> None:
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
@@ -1168,13 +1171,305 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["cover"], x=5.95, y=1.22, w=7.15)
 
-    prs.save(OUTPUT_FILE)
+    prs.save(output_file)
+
+
+def build_trainer_presentation(images: dict, output_file: Path) -> None:
+    prs = Presentation()
+    prs.slide_width = Inches(13.333)
+    prs.slide_height = Inches(7.5)
+    blank = prs.slide_layouts[6]
+
+    # 1) Cover
+    slide = prs.slides.add_slide(blank)
+    add_title_block(
+        slide,
+        "Trainer Deck (45 min): Cursor AI + MCP Enablement",
+        "Facilitator version with talking points, pacing, and troubleshooting cues.",
+    )
+    add_bullets(
+        slide,
+        [
+            "Audience: developers and team leads",
+            "Goal: connect tools, run safe workflows, publish first skills",
+            "Format: short demo + labs + troubleshooting",
+            f"Updated: {datetime.now().strftime('%Y-%m-%d')}",
+        ],
+        x=0.6,
+        y=1.55,
+        w=5.2,
+        h=4.8,
+    )
+    add_image(slide, images["cover"], x=5.95, y=1.22, w=7.15)
+
+    # 2) Run of show
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "45-minute trainer run-of-show")
+    add_bullets(
+        slide,
+        [
+            "0-5 min: explain MCP in simple terms",
+            "5-12 min: show Top MCP and Top Skills",
+            "12-22 min: live setup in Cursor settings",
+            "22-34 min: Jira/Figma/Bitbucket connection tests",
+            "34-40 min: build one simple agent skill",
+            "40-45 min: common errors, Q&A, next steps",
+        ],
+        x=0.8,
+        y=1.55,
+        w=11.3,
+        h=5.7,
+        level0_size=24,
+    )
+
+    # 3) What to teach first
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "What to teach first (order matters)")
+    add_bullets(
+        slide,
+        [
+            "1) Top MCP tools",
+            "2) Top agent skills",
+            "3) Prompt formula",
+            "4) Do/Don't safe rules",
+            "5) Setup steps and command practice",
+            "6) Common errors and quick fixes",
+        ],
+        x=0.95,
+        y=1.55,
+        w=11.0,
+        h=5.6,
+        level0_size=25,
+    )
+
+    # 4) Top MCP
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Top MCP tools for development teams")
+    add_bullets(
+        slide,
+        [
+            "Use these in your pilot first:",
+            ("Bitbucket/Git, Jira, Figma", 1),
+            ("Docs MCP, CI/CD MCP, Database MCP", 1),
+            "Reason: fast wins and clear ROI",
+        ],
+    )
+    add_image(slide, images["top_mcp"], x=5.95, y=1.23, w=7.15)
+
+    # 5) Top Skills
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Top starter agent skills")
+    add_bullets(
+        slide,
+        [
+            "Required first set:",
+            ("jira-ticket-triage", 1),
+            ("figma-handoff", 1),
+            ("pr-quality-check", 1),
+            ("release-note-writer", 1),
+            ("bug-root-cause", 1),
+            ("test-case-generator", 1),
+        ],
+    )
+    add_image(slide, images["top_skills"], x=5.95, y=1.23, w=7.15)
+
+    # 6) Prompt formula
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Prompt formula (repeat every demo)")
+    add_bullets(
+        slide,
+        [
+            "Trainer talking line:",
+            ('"Context + Task + Constraints + Output format"', 1),
+            "Ask participants to use this format in all labs.",
+            "This reduces confusion and bad outputs.",
+        ],
+    )
+    add_image(slide, images["prompt_formula"], x=5.95, y=1.23, w=7.15)
+
+    # 7) Do/Don't
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Do and Don't (safety first)")
+    add_bullets(
+        slide,
+        [
+            "Call this out clearly before labs:",
+            ("Do: use read-only first", 1),
+            ("Do: request approval before write actions", 1),
+            ("Don't: use admin tokens", 1),
+            ("Don't: skip review/checklist", 1),
+        ],
+    )
+    add_image(slide, images["do_dont"], x=5.95, y=1.23, w=7.15)
+
+    # 8) Setup commands
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Lab setup commands (copy and run)")
+    add_code_block(
+        slide,
+        [
+            "mkdir -p ~/cursor-mcp-training/{servers,skills,logs} && cd ~/cursor-mcp-training",
+            "python3 -m venv .venv && source .venv/bin/activate",
+            "python -m pip install --upgrade pip",
+            "pip install mcp httpx python-dotenv pyyaml",
+            "",
+            "cat > .env <<'EOF'",
+            "JIRA_BASE_URL=https://your-company.atlassian.net",
+            "JIRA_EMAIL=you@company.com",
+            "JIRA_API_TOKEN=<jira_token>",
+            "FIGMA_TOKEN=<figma_token>",
+            "BITBUCKET_WORKSPACE=<workspace>",
+            "BITBUCKET_USERNAME=<username>",
+            "BITBUCKET_APP_PASSWORD=<app_password>",
+            "EOF",
+        ],
+        y=1.75,
+        h=5.45,
+        font_size=14,
+    )
+
+    # 9) Cursor settings screenshot
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Live demo: Cursor settings -> MCP")
+    add_bullets(
+        slide,
+        [
+            "Step 1: open Settings",
+            "Step 2: Features -> MCP",
+            "Step 3: switch MCP to ON",
+            "Step 4: open mcp.json",
+        ],
+        x=0.55,
+        y=1.55,
+        w=4.7,
+        h=5.4,
+        level0_size=24,
+    )
+    add_image(slide, images["settings_screen"], x=5.35, y=1.22, w=7.75)
+
+    # 10) mcp.json screenshot
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Live demo: mcp.json content")
+    add_code_block(
+        slide,
+        [
+            "{",
+            '  "mcpServers": {',
+            '    "jira": {"command":"python","args":["servers/jira_server.py"],"envFile":".env"},',
+            '    "figma": {"command":"python","args":["servers/figma_server.py"],"envFile":".env"},',
+            '    "bitbucket": {"command":"python","args":["servers/bitbucket_server.py"],"envFile":".env"}',
+            "  }",
+            "}",
+            "",
+            "# Save and restart Cursor",
+        ],
+        x=0.55,
+        y=2.1,
+        w=5.2,
+        h=4.8,
+        font_size=13,
+    )
+    add_image(slide, images["mcp_json_screen"], x=5.95, y=1.22, w=7.15)
+
+    # 11) Connection tests
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Live demo: test connections (Jira/Figma/Bitbucket)")
+    add_code_block(
+        slide,
+        [
+            "# Jira",
+            "curl -s -u \"$JIRA_EMAIL:$JIRA_API_TOKEN\" \"$JIRA_BASE_URL/rest/api/3/myself\" | jq '.displayName'",
+            "",
+            "# Figma",
+            "curl -s -H \"X-Figma-Token: $FIGMA_TOKEN\" \"https://api.figma.com/v1/files/$FIGMA_FILE_KEY\" | jq '.name'",
+            "",
+            "# Bitbucket",
+            "curl -s -u \"$BITBUCKET_USERNAME:$BITBUCKET_APP_PASSWORD\" \"https://api.bitbucket.org/2.0/repositories/$BITBUCKET_WORKSPACE\" | jq '.values[0].full_name'",
+        ],
+        x=0.55,
+        y=2.0,
+        w=5.2,
+        h=4.9,
+        font_size=12,
+    )
+    add_image(slide, images["status_screen"], x=5.95, y=1.22, w=7.15)
+
+    # 12) Common errors
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Live support slide: common errors and fixes")
+    add_bullets(
+        slide,
+        [
+            "Use this during Q&A:",
+            ("401 -> token issue", 1),
+            ("403 -> permission issue", 1),
+            ("404 -> wrong key/url", 1),
+            ("MCP not listed -> restart Cursor", 1),
+        ],
+    )
+    add_image(slide, images["common_errors"], x=5.95, y=1.23, w=7.15)
+
+    # 13) 5-minute routine
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Coach this habit: 5-minute daily routine")
+    add_bullets(
+        slide,
+        [
+            "Ask every participant to follow this daily.",
+            "This is the easiest way to keep adoption active.",
+            "Review weekly and celebrate improvements.",
+        ],
+    )
+    add_image(slide, images["five_min_routine"], x=5.95, y=1.23, w=7.15)
+
+    # 14) Risk controls and roadmap
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Risk controls and 30-60-90 rollout")
+    add_bullets(
+        slide,
+        [
+            "Must-have controls:",
+            ("Low-access tokens + human approvals", 1),
+            ("Audit logs + weekly KPI review", 1),
+            "Rollout: 0-30 connect, 31-60 standardize, 61-90 scale.",
+        ],
+        level0_size=19,
+        level1_size=16,
+    )
+    add_image(slide, images["roadmap"], x=5.95, y=1.23, w=7.15)
+
+    # 15) Final trainer checklist
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Trainer checklist (before, during, after)")
+    add_bullets(
+        slide,
+        [
+            "Before: test tokens and demo environment.",
+            "During: keep prompts simple and repeat formula.",
+            "During: pause at each error and show quick fix.",
+            "After: share participant deck and runbook.",
+            "After: schedule weekly office hours.",
+            "",
+            "Q&A",
+        ],
+        x=0.8,
+        y=1.55,
+        w=5.5,
+        h=5.7,
+    )
+    add_image(slide, images["cover"], x=5.95, y=1.22, w=7.15)
+
+    prs.save(output_file)
 
 
 def main() -> None:
     images = generate_images()
-    build_presentation(images)
-    print(f"Created: {OUTPUT_FILE}")
+    build_participant_presentation(images, PARTICIPANT_OUTPUT_FILE)
+    copyfile(PARTICIPANT_OUTPUT_FILE, LEGACY_OUTPUT_FILE)
+    build_trainer_presentation(images, TRAINER_OUTPUT_FILE)
+    print(f"Created participant deck: {PARTICIPANT_OUTPUT_FILE}")
+    print(f"Created trainer deck: {TRAINER_OUTPUT_FILE}")
+    print(f"Updated legacy deck: {LEGACY_OUTPUT_FILE}")
     print(f"Assets directory: {ASSETS_DIR}")
 
 
