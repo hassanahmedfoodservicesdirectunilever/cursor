@@ -1,17 +1,45 @@
-# Cursor MCP Training Tutorial (Jira, Figma, Bitbucket)
+# Cursor MCP Training Guide (Simple English)
 
-This guide is a practical runbook for developer teams to learn and adopt Cursor + MCP quickly.
-
-## 1) Prerequisites
-
-- Cursor installed and signed in
-- Python 3.10+ and Node.js 18+
-- Access tokens for Jira, Figma, and Bitbucket
-- A pilot repo and Jira project
+This guide is written in very simple steps.
+Your team can copy, run, and learn quickly.
 
 ---
 
-## 2) Local setup commands
+## What is the goal?
+
+Use Cursor with MCP so developers can:
+- finish tasks faster
+- write clearer Jira updates
+- create better pull requests
+- reduce rework between design and code
+
+---
+
+## Top MCP tools for development
+
+Start with these first:
+1. Bitbucket/Git MCP
+2. Jira MCP
+3. Figma MCP
+4. Docs MCP (Confluence or Notion)
+5. CI/CD MCP
+6. Database MCP
+
+---
+
+## Top agent skills to create first
+
+Create these six starter skills:
+1. `jira-ticket-triage`
+2. `figma-handoff`
+3. `pr-quality-check`
+4. `release-note-writer`
+5. `bug-root-cause`
+6. `test-case-generator`
+
+---
+
+## Step 1: Local setup commands
 
 ```bash
 mkdir -p ~/cursor-mcp-training/{servers,skills,logs}
@@ -28,7 +56,7 @@ sudo apt-get update && sudo apt-get install -y jq
 
 ---
 
-## 3) Save credentials
+## Step 2: Add your tokens
 
 ```bash
 cat > .env <<'EOF'
@@ -40,17 +68,37 @@ BITBUCKET_WORKSPACE=<workspace>
 BITBUCKET_USERNAME=<username>
 BITBUCKET_APP_PASSWORD=<app_password>
 EOF
+
+echo '.env' >> .gitignore
 ```
+
+Important:
+- Never commit `.env` to git.
+- Rotate tokens every 90 days.
 
 ---
 
-## 4) Configure MCP in Cursor
+## Step 3: Open Cursor settings and connect MCP
 
-Create `.cursor/mcp.json` (template):
+In Cursor:
+1. Open **Settings**
+2. Open **Features**
+3. Click **MCP**
+4. Turn MCP **ON**
+5. Click **Open mcp.json**
 
-```bash
-mkdir -p .cursor
-cat > .cursor/mcp.json <<'JSON'
+The presentation includes screenshot slides for this process:
+- `cursor_settings_screen.png`
+- `cursor_mcp_json_screen.png`
+- `cursor_status_screen.png`
+
+---
+
+## Step 4: Add mcp.json
+
+Create `.cursor/mcp.json`:
+
+```json
 {
   "mcpServers": {
     "jira": {
@@ -70,16 +118,13 @@ cat > .cursor/mcp.json <<'JSON'
     }
   }
 }
-JSON
 ```
 
-> Replace `servers/*.py` with your MCP server executable paths.
+Then restart Cursor.
 
 ---
 
-## 5) Validate integrations
-
-### Jira
+## Step 5: Test Jira connection
 
 ```bash
 source .venv/bin/activate && source .env
@@ -87,7 +132,12 @@ curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
   "$JIRA_BASE_URL/rest/api/3/myself" | jq '.displayName'
 ```
 
-### Figma
+Prompt in Cursor:
+- `Using Jira MCP, summarize PROJ-101 and draft acceptance criteria.`
+
+---
+
+## Step 6: Test Figma connection
 
 ```bash
 source .venv/bin/activate && source .env
@@ -96,7 +146,12 @@ curl -s -H "X-Figma-Token: $FIGMA_TOKEN" \
   "https://api.figma.com/v1/files/$FIGMA_FILE_KEY" | jq '.name'
 ```
 
-### Bitbucket
+Prompt in Cursor:
+- `Using Figma MCP, extract design tokens and map components to stories.`
+
+---
+
+## Step 7: Test Bitbucket connection
 
 ```bash
 source .venv/bin/activate && source .env
@@ -104,28 +159,12 @@ curl -s -u "$BITBUCKET_USERNAME:$BITBUCKET_APP_PASSWORD" \
   "https://api.bitbucket.org/2.0/repositories/$BITBUCKET_WORKSPACE" | jq '.values[0].full_name'
 ```
 
----
-
-## 6) Team lab prompts (run in Cursor chat)
-
-### Jira lab
-
-- `Using Jira MCP, summarize PROJ-101, draft acceptance criteria, and generate test cases.`
-- `Generate standup update with blockers, risks, and next actions for PROJ sprint.`
-
-### Figma lab
-
-- `Using Figma MCP, extract design tokens and component variants for frame HomePage.`
-- `Map design components to frontend stories with acceptance criteria.`
-
-### Bitbucket lab
-
-- `Using Bitbucket MCP, summarize PR #123 and list review risk areas.`
-- `Create release notes from commits merged since the previous tag.`
+Prompt in Cursor:
+- `Using Bitbucket MCP, summarize PR #123 and create a review checklist.`
 
 ---
 
-## 7) Add agent skills (reusable templates)
+## Step 8: Create first agent skill
 
 ```bash
 mkdir -p skills/jira-ticket-triage
@@ -134,7 +173,7 @@ cd skills/jira-ticket-triage
 cat > skill.yaml <<'YAML'
 name: jira-ticket-triage
 version: 1.0.0
-description: Triage issue and output action plan
+description: Triage issue and return action plan
 tools: [jira.search, jira.get_issue]
 YAML
 
@@ -142,7 +181,7 @@ cat > prompts.md <<'MD'
 # Inputs
 - issue_key
 - team_context
-- definition_of_done
+- done_definition
 
 # Outputs
 - summary
@@ -150,38 +189,32 @@ cat > prompts.md <<'MD'
 - test_cases
 MD
 
-echo '[{"input":"PROJ-101","assert_contains":["summary","acceptance_criteria","test_cases"]}]' > tests.json
+echo '[{"input":"PROJ-101","assert_contains":["Summary","Acceptance"]}]' > tests.json
 ```
 
 ---
 
-## 8) Weekly operations and adoption commands
+## Easy weekly team routine
 
-```bash
-mkdir -p logs metrics
+1. Monday: review top Jira tasks with Cursor.
+2. Daily: use PR quality skill before review.
+3. Wednesday: improve one weak prompt.
+4. Friday: check KPIs and publish one skill update.
 
-# Replace scripts with your internal automation tooling
-python scripts/export_mcp_logs.py --last-days 7 > logs/mcp_weekly.json
-python scripts/calc_kpis.py --input logs/mcp_weekly.json --output metrics/weekly_kpis.csv
-
-echo 'date,cycle_time,pr_lead_time,reopen_rate,prompt_reuse,automation_success' > metrics/template.csv
-```
-
-Track these KPIs weekly:
-- Cycle time
+Track these KPIs:
+- cycle time
 - PR lead time
-- Reopen/rework rate
-- Prompt reuse rate
-- Automation success rate
+- reopen rate
+- prompt reuse
+- automation success
 
 ---
 
-## 9) Easy adoption model (recommended)
+## Simple safety rules
 
-1. Start with one pilot squad (5-8 developers).
-2. Use read-only MCP actions first.
-3. Add write actions only with approval checkpoints.
-4. Publish 3-5 team skills in month 1.
-5. Run weekly 30-minute office hours.
+1. Use low-access tokens only.
+2. Ask human approval for write actions.
+3. Keep logs for all MCP actions.
+4. Review failures every week.
 
-This model keeps rollout safe, practical, and easy for developers to adopt.
+This is the easiest way to learn fast and adopt safely.

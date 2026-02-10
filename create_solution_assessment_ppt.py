@@ -15,6 +15,9 @@ ROOT = Path(__file__).parent
 ASSETS_DIR = ROOT / "presentation_assets"
 OUTPUT_FILE = ROOT / "Solution_Assessment_Cursor_AI_Capabilities_Integration_Review.pptx"
 
+CANVAS_W = 2400
+CANVAS_H = 1350
+
 
 def load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     candidates = [
@@ -27,34 +30,27 @@ def load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     return ImageFont.load_default()
 
 
-def draw_header(draw: ImageDraw.ImageDraw, title: str, width: int, accent=(35, 94, 179)) -> None:
-    draw.rectangle((0, 0, width, 104), fill=accent)
-    draw.text((34, 24), title, font=load_font(44, bold=True), fill=(255, 255, 255))
+def save_image(image: Image.Image, path: Path) -> None:
+    image.save(path, format="PNG", dpi=(300, 300))
 
 
-def draw_box(
-    draw: ImageDraw.ImageDraw,
-    xy,
-    title: str,
-    lines,
-    fill_color=(246, 250, 255),
-    border=(132, 163, 210),
-) -> None:
-    x1, y1, x2, y2 = xy
-    draw.rounded_rectangle(xy, radius=20, fill=fill_color, outline=border, width=3)
-    draw.text((x1 + 18, y1 + 16), title, font=load_font(34, bold=True), fill=(24, 41, 70))
-    y = y1 + 72
-    for line in lines:
-        wrapped = fill(line, width=25)
-        draw.text((x1 + 20, y), f"- {wrapped}", font=load_font(25), fill=(40, 57, 84))
-        y += 54 + (wrapped.count("\n") * 18)
+def draw_header(draw: ImageDraw.ImageDraw, title: str, width: int, accent=(26, 92, 168)) -> None:
+    draw.rectangle((0, 0, width, 140), fill=accent)
+    draw.text((48, 38), title, font=load_font(64, bold=True), fill=(255, 255, 255))
 
 
-def draw_arrow(draw: ImageDraw.ImageDraw, start, end, color=(68, 107, 173), width=6) -> None:
+def new_canvas(title: str, accent=(26, 92, 168)):
+    image = Image.new("RGB", (CANVAS_W, CANVAS_H), (244, 248, 255))
+    draw = ImageDraw.Draw(image)
+    draw_header(draw, title, CANVAS_W, accent=accent)
+    return image, draw
+
+
+def draw_arrow(draw: ImageDraw.ImageDraw, start, end, color=(70, 109, 175), width=8) -> None:
     draw.line([start, end], fill=color, width=width)
     angle = atan2(end[1] - start[1], end[0] - start[0])
-    arrow_len = 20
-    arrow_width = 10
+    arrow_len = 28
+    arrow_width = 14
     p1 = end
     p2 = (
         end[0] - arrow_len * cos(angle) + arrow_width * sin(angle),
@@ -67,348 +63,395 @@ def draw_arrow(draw: ImageDraw.ImageDraw, start, end, color=(68, 107, 173), widt
     draw.polygon([p1, p2, p3], fill=color)
 
 
-def save_image(image: Image.Image, path: Path) -> None:
-    image.save(path, format="PNG", dpi=(300, 300))
+def draw_text_center(draw: ImageDraw.ImageDraw, box, text: str, font, fill_color=(24, 45, 78)) -> None:
+    x1, y1, x2, y2 = box
+    bb = draw.textbbox((0, 0), text, font=font)
+    text_w = bb[2] - bb[0]
+    text_h = bb[3] - bb[1]
+    draw.text((x1 + (x2 - x1 - text_w) / 2, y1 + (y2 - y1 - text_h) / 2), text, font=font, fill=fill_color)
 
 
-def create_title_visual(path: Path) -> None:
-    width, height = 1800, 1012
-    image = Image.new("RGB", (width, height), (243, 247, 253))
-    draw = ImageDraw.Draw(image)
-    draw_header(draw, "Cursor AI + MCP integration view", width)
+def draw_card(draw: ImageDraw.ImageDraw, box, title: str, lines, fill_color=(236, 244, 255), border=(130, 161, 208)) -> None:
+    x1, y1, x2, y2 = box
+    draw.rounded_rectangle(box, radius=24, fill=fill_color, outline=border, width=4)
+    draw.text((x1 + 24, y1 + 20), title, font=load_font(44, bold=True), fill=(23, 45, 80))
+    y = y1 + 88
+    for line in lines:
+        wrapped = fill(line, width=29)
+        draw.text((x1 + 26, y), f"- {wrapped}", font=load_font(30), fill=(39, 58, 92))
+        y += 62 + (wrapped.count("\n") * 18)
 
-    center = (890, 500)
-    r = 190
-    draw.ellipse((center[0] - r, center[1] - r, center[0] + r, center[1] + r), fill=(29, 78, 156), outline=(18, 56, 120), width=4)
-    draw.text((center[0] - 128, center[1] - 34), "Cursor\nAgents", font=load_font(54, bold=True), fill=(255, 255, 255), align="center")
 
-    node_specs = [
-        ((260, 220, 620, 360), "Jira MCP", (255, 245, 232)),
-        ((1180, 220, 1540, 360), "Figma MCP", (236, 250, 243)),
-        ((260, 670, 620, 810), "Bitbucket MCP", (237, 244, 255)),
-        ((1180, 670, 1540, 810), "Policy + Audit", (250, 240, 250)),
+def create_cover_visual(path: Path) -> None:
+    image, draw = new_canvas("Cursor AI + MCP: simple view")
+
+    center = (1200, 700)
+    r = 250
+    draw.ellipse((center[0] - r, center[1] - r, center[0] + r, center[1] + r), fill=(28, 83, 160), outline=(17, 58, 120), width=6)
+    draw_text_center(draw, (center[0] - r, center[1] - r, center[0] + r, center[1] + r), "Cursor\nAgent", load_font(64, bold=True), (255, 255, 255))
+
+    nodes = [
+        ((320, 300, 760, 500), "Jira MCP", (255, 245, 230)),
+        ((1640, 300, 2080, 500), "Figma MCP", (235, 250, 241)),
+        ((320, 900, 760, 1100), "Bitbucket MCP", (236, 244, 255)),
+        ((1640, 900, 2080, 1100), "Team Rules", (251, 240, 250)),
+    ]
+    for box, label, color in nodes:
+        draw.rounded_rectangle(box, radius=26, fill=color, outline=(136, 166, 211), width=4)
+        draw_text_center(draw, box, label, load_font(52, bold=True))
+
+    draw_arrow(draw, (760, 400), (940, 560))
+    draw_arrow(draw, (1640, 400), (1460, 560))
+    draw_arrow(draw, (760, 1000), (940, 840))
+    draw_arrow(draw, (1640, 1000), (1460, 840))
+
+    draw.text((48, 1220), "Simple goal: connect tools, use safe prompts, and speed up delivery.", font=load_font(48, bold=True), fill=(39, 60, 94))
+    save_image(image, path)
+
+
+def create_top_mcp_visual(path: Path) -> None:
+    image, draw = new_canvas("Top MCP tools for development teams", accent=(18, 99, 151))
+    draw.text((58, 170), "Start with these first. They give fast value in engineering work.", font=load_font(42), fill=(40, 60, 95))
+
+    cards = [
+        ("1) Bitbucket / Git MCP", ["Read repos and pull requests", "Draft PR summaries", "Build better review checklists"]),
+        ("2) Jira MCP", ["Read issues and sprint data", "Write clear acceptance criteria", "Create standup summaries"]),
+        ("3) Figma MCP", ["Read design tokens", "Map components to stories", "Reduce design-code mismatch"]),
+        ("4) Docs MCP", ["Search team docs quickly", "Use standards in prompts", "Reduce repeated questions"]),
+        ("5) CI/CD MCP", ["Read build status quickly", "Summarize failures", "Suggest fix order"]),
+        ("6) Database MCP", ["Read schema and queries", "Check impact before code changes", "Improve migration safety"]),
     ]
 
-    for box, label, color in node_specs:
-        draw.rounded_rectangle(box, radius=24, fill=color, outline=(137, 164, 206), width=3)
-        tw, th = draw.textbbox((0, 0), label, font=load_font(46, bold=True))[2:]
-        draw.text(((box[0] + box[2] - tw) / 2, (box[1] + box[3] - th) / 2), label, font=load_font(46, bold=True), fill=(26, 48, 83))
+    x = 72
+    y = 260
+    w = 740
+    h = 430
+    gap_x = 54
+    gap_y = 44
+    for idx, (title, lines) in enumerate(cards):
+        col = idx % 3
+        row = idx // 3
+        box = (x + col * (w + gap_x), y + row * (h + gap_y), x + col * (w + gap_x) + w, y + row * (h + gap_y) + h)
+        fill_color = (237, 245, 255) if row == 0 else (238, 251, 243)
+        draw_card(draw, box, title, lines, fill_color=fill_color)
 
-    draw_arrow(draw, (620, 290), (700, 390))
-    draw_arrow(draw, (1180, 290), (1080, 390))
-    draw_arrow(draw, (620, 740), (700, 620))
-    draw_arrow(draw, (1180, 740), (1080, 620))
-
-    draw.text((36, 920), "Assessment focus: capability maturity, integration design, operating model, and skill governance", font=load_font(32), fill=(46, 66, 99))
     save_image(image, path)
 
 
-def create_capability_chart(path: Path) -> None:
-    width, height = 1800, 1012
-    image = Image.new("RGB", (width, height), (247, 250, 255))
-    draw = ImageDraw.Draw(image)
-    draw_header(draw, "Current capability assessment", width)
+def create_top_skills_visual(path: Path) -> None:
+    image, draw = new_canvas("Top agent skills to start with", accent=(83, 90, 180))
+    draw.text((58, 170), "Build these 6 reusable skills first for quick adoption.", font=load_font(42), fill=(44, 58, 100))
 
-    categories = [
-        ("Code generation and refactoring", 4.4, (60, 130, 246)),
-        ("Developer productivity gains", 4.1, (52, 168, 83)),
-        ("MCP integration readiness", 3.7, (235, 135, 49)),
-        ("Governance and controls", 3.3, (200, 93, 93)),
-        ("Skill reuse and standardization", 3.5, (130, 102, 219)),
+    skills = [
+        ("jira-ticket-triage", "Input: issue key\nOutput: summary + test cases"),
+        ("figma-handoff", "Input: frame id\nOutput: dev task checklist"),
+        ("pr-quality-check", "Input: PR id\nOutput: review checklist"),
+        ("release-note-writer", "Input: commit range\nOutput: release notes"),
+        ("bug-root-cause", "Input: bug + logs\nOutput: likely causes + next steps"),
+        ("test-case-generator", "Input: user story\nOutput: unit + API test ideas"),
     ]
 
-    left = 110
-    top = 160
-    bar_max = 1080
-    row_height = 130
-
-    draw.text((left, 115), "Maturity score (0-5)", font=load_font(30, bold=True), fill=(36, 59, 94))
-    for idx, (label, score, color) in enumerate(categories):
-        y = top + idx * row_height
-        draw.text((left, y + 22), label, font=load_font(29, bold=True), fill=(34, 52, 82))
-        track_x1 = 700
-        track_x2 = track_x1 + bar_max
-        draw.rounded_rectangle((track_x1, y + 20, track_x2, y + 70), radius=18, fill=(225, 234, 248))
-        fill_width = int(bar_max * (score / 5.0))
-        draw.rounded_rectangle((track_x1, y + 20, track_x1 + fill_width, y + 70), radius=18, fill=color)
-        draw.text((track_x2 + 18, y + 22), f"{score:.1f}", font=load_font(31, bold=True), fill=(20, 38, 65))
-
-    draw.rectangle((110, 815, 1490, 865), fill=(234, 242, 255), outline=(159, 179, 214), width=2)
-    draw.text((140, 826), "Overall readiness score: 3.8 / 5.0 (strong pilot candidate with governance uplift needed)", font=load_font(25, bold=True), fill=(32, 56, 90))
-    save_image(image, path)
-
-
-def create_architecture(path: Path) -> None:
-    width, height = 1800, 1012
-    image = Image.new("RGB", (width, height), (244, 248, 254))
-    draw = ImageDraw.Draw(image)
-    draw_header(draw, "Target integration architecture", width)
-
-    draw_box(
-        draw,
-        (80, 170, 520, 760),
-        "Enterprise tools",
-        [
-            "Jira projects and workflows",
-            "Figma files and design systems",
-            "Bitbucket repositories and pull requests",
-        ],
-        fill_color=(236, 246, 255),
-    )
-    draw_box(
-        draw,
-        (590, 170, 1020, 760),
-        "MCP server layer",
-        [
-            "Authentication and token management",
-            "Standardized tool schemas",
-            "Rate limits, retries, and audit logs",
-        ],
-        fill_color=(235, 250, 240),
-    )
-    draw_box(
-        draw,
-        (1090, 170, 1520, 760),
-        "Cursor agents",
-        [
-            "Workflow prompts and skills",
-            "Human approval checkpoints",
-            "Outputs: tickets, PRs, implementation notes",
-        ],
-        fill_color=(248, 239, 255),
-    )
-
-    draw_arrow(draw, (520, 320), (590, 320))
-    draw_arrow(draw, (520, 520), (590, 520))
-    draw_arrow(draw, (1020, 420), (1090, 420))
-
-    draw.rectangle((640, 785, 970, 852), fill=(255, 243, 228), outline=(210, 156, 89), width=3)
-    draw.text((665, 806), "Policy + Compliance guardrails", font=load_font(25, bold=True), fill=(115, 71, 24))
+    x = 76
+    y = 250
+    w = 730
+    h = 430
+    gap_x = 54
+    gap_y = 44
+    for idx, (name, desc) in enumerate(skills):
+        col = idx % 3
+        row = idx // 3
+        box = (x + col * (w + gap_x), y + row * (h + gap_y), x + col * (w + gap_x) + w, y + row * (h + gap_y) + h)
+        fill_color = (244, 240, 255) if row == 0 else (236, 247, 255)
+        draw.rounded_rectangle(box, radius=24, fill=fill_color, outline=(146, 164, 210), width=4)
+        draw.text((box[0] + 24, box[1] + 26), name, font=load_font(42, bold=True), fill=(33, 53, 96))
+        draw.text((box[0] + 24, box[1] + 120), desc, font=load_font(34), fill=(45, 65, 99))
+        draw.rectangle((box[0] + 24, box[1] + 290, box[2] - 24, box[1] + 362), fill=(255, 247, 230), outline=(214, 166, 104), width=3)
+        draw.text((box[0] + 38, box[1] + 312), "Save as versioned skill package", font=load_font(31, bold=True), fill=(105, 68, 30))
 
     save_image(image, path)
 
 
-def create_mcp_service_diagram(path: Path, service: str, color: tuple, exposed_data, agent_actions, impact) -> None:
-    width, height = 1800, 1012
-    image = Image.new("RGB", (width, height), (247, 249, 253))
-    draw = ImageDraw.Draw(image)
-    draw_header(draw, f"MCP integration pattern: {service}", width, accent=color)
+def create_architecture_visual(path: Path) -> None:
+    image, draw = new_canvas("Simple architecture for safe use", accent=(26, 116, 142))
 
-    draw_box(draw, (70, 170, 520, 780), "Data exposed via MCP", exposed_data, fill_color=(241, 247, 255))
-    draw_box(draw, (580, 170, 1030, 780), "Agent actions", agent_actions, fill_color=(241, 255, 245))
-    draw_box(draw, (1090, 170, 1540, 780), "Business impact", impact, fill_color=(255, 246, 238))
+    draw_card(
+        draw,
+        (120, 260, 620, 1050),
+        "Tools",
+        ["Jira", "Figma", "Bitbucket", "Docs and CI"],
+        fill_color=(238, 247, 255),
+    )
+    draw_card(
+        draw,
+        (760, 260, 1260, 1050),
+        "MCP layer",
+        ["API auth", "Tool schema", "Logs and rate limits", "Error handling"],
+        fill_color=(236, 252, 243),
+    )
+    draw_card(
+        draw,
+        (1400, 260, 1900, 1050),
+        "Cursor",
+        ["Prompt + skill", "User approval", "Code and docs output", "Action summary"],
+        fill_color=(245, 241, 255),
+    )
+    draw_card(
+        draw,
+        (1960, 260, 2320, 1050),
+        "Governance",
+        ["Least privilege", "Audit logs", "Weekly KPI check", "Rotate tokens"],
+        fill_color=(255, 245, 236),
+    )
 
-    draw_arrow(draw, (520, 470), (580, 470), color=(92, 123, 176))
-    draw_arrow(draw, (1030, 470), (1090, 470), color=(92, 123, 176))
+    draw_arrow(draw, (620, 620), (760, 620), width=10)
+    draw_arrow(draw, (1260, 620), (1400, 620), width=10)
+    draw_arrow(draw, (1900, 620), (1960, 620), width=10)
 
     save_image(image, path)
 
 
-def create_effectiveness_matrix(path: Path) -> None:
-    width, height = 1800, 1012
-    image = Image.new("RGB", (width, height), (245, 249, 255))
-    draw = ImageDraw.Draw(image)
-    draw_header(draw, "How to use Cursor + MCP effectively", width)
+def draw_fake_cursor_shell(draw: ImageDraw.ImageDraw, title: str) -> None:
+    draw.rounded_rectangle((220, 190, 2180, 1200), radius=24, fill=(23, 28, 38), outline=(75, 87, 112), width=4)
+    draw.rectangle((220, 190, 2180, 260), fill=(34, 41, 57))
+    draw.text((270, 210), "Cursor - Example UI", font=load_font(34, bold=True), fill=(226, 233, 247))
+    draw.text((790, 210), title, font=load_font(34), fill=(170, 184, 212))
 
-    grid = (180, 180, 1420, 780)
-    draw.rectangle(grid, outline=(99, 131, 186), width=4, fill=(252, 254, 255))
-    mid_x = (grid[0] + grid[2]) // 2
-    mid_y = (grid[1] + grid[3]) // 2
-    draw.line((mid_x, grid[1], mid_x, grid[3]), fill=(120, 150, 201), width=3)
-    draw.line((grid[0], mid_y, grid[2], mid_y), fill=(120, 150, 201), width=3)
+    for i, c in enumerate([(250, 106, 106), (245, 183, 78), (93, 208, 105)]):
+        draw.ellipse((236 + i * 30, 213, 256 + i * 30, 233), fill=c)
 
-    draw.text((210, 140), "Low standardization", font=load_font(24), fill=(36, 58, 92))
-    draw.text((1180, 140), "High standardization", font=load_font(24), fill=(36, 58, 92))
-    draw.text((40, 480), "High\nautonomy", font=load_font(24), fill=(36, 58, 92))
-    draw.text((50, 210), "Low\nautonomy", font=load_font(24), fill=(36, 58, 92))
 
-    draw.text((225, 215), "Ad hoc prompts", font=load_font(26, bold=True), fill=(122, 62, 62))
-    draw.text((850, 215), "Reusable task recipes", font=load_font(26, bold=True), fill=(43, 79, 135))
-    draw.text((215, 525), "Uncontrolled automation", font=load_font(26, bold=True), fill=(122, 62, 62))
-    draw.text((865, 525), "Governed agent workflows", font=load_font(26, bold=True), fill=(38, 107, 72))
+def create_cursor_settings_screen(path: Path) -> None:
+    image, draw = new_canvas("Screenshot: open MCP settings inside Cursor", accent=(40, 100, 158))
+    draw_fake_cursor_shell(draw, "Settings")
 
-    practices = [
-        ("Prompt template library", (1080, 330), (51, 112, 187)),
-        ("Definition of Done checks", (1140, 380), (31, 130, 73)),
-        ("Approval gates for writes", (1020, 610), (31, 130, 73)),
-        ("Weekly usage analytics", (1230, 560), (31, 130, 73)),
-        ("One-off assistant chats", (370, 350), (175, 90, 90)),
-        ("Unreviewed status updates", (420, 630), (175, 90, 90)),
+    draw.rectangle((260, 280, 620, 1160), fill=(29, 35, 48))
+    menu_items = ["General", "Editor", "Terminal", "Features", "MCP", "Privacy", "About"]
+    y = 330
+    for item in menu_items:
+        if item == "MCP":
+            draw.rounded_rectangle((290, y - 14, 590, y + 40), radius=12, fill=(64, 104, 184))
+            draw.text((320, y), item, font=load_font(36, bold=True), fill=(255, 255, 255))
+        else:
+            draw.text((320, y), item, font=load_font(34), fill=(195, 207, 231))
+        y += 92
+
+    draw.rectangle((650, 280, 2140, 1160), fill=(37, 45, 61))
+    draw.text((710, 340), "MCP Servers", font=load_font(46, bold=True), fill=(233, 239, 252))
+    draw.rounded_rectangle((700, 430, 2060, 540), radius=14, fill=(50, 62, 84))
+    draw.text((740, 466), "Enable MCP integration", font=load_font(36), fill=(224, 231, 246))
+    draw.rounded_rectangle((1840, 452, 2020, 520), radius=34, fill=(68, 158, 91))
+    draw.text((1886, 468), "ON", font=load_font(34, bold=True), fill=(255, 255, 255))
+
+    draw.rounded_rectangle((700, 590, 2060, 730), radius=14, fill=(50, 62, 84))
+    draw.text((740, 635), "Open mcp.json", font=load_font(36), fill=(224, 231, 246))
+    draw.rounded_rectangle((1710, 614, 2020, 694), radius=12, fill=(73, 122, 220))
+    draw.text((1766, 635), "Open file", font=load_font(34, bold=True), fill=(255, 255, 255))
+
+    draw.rounded_rectangle((70, 1020, 1020, 1270), radius=18, fill=(237, 246, 255), outline=(130, 161, 207), width=3)
+    draw.text((108, 1062), "Step 1: Click Settings  ->  Features  ->  MCP", font=load_font(40, bold=True), fill=(30, 58, 101))
+    draw.text((108, 1130), "Step 2: Turn ON MCP and open mcp.json", font=load_font(36), fill=(30, 58, 101))
+
+    save_image(image, path)
+
+
+def create_cursor_mcp_json_screen(path: Path) -> None:
+    image, draw = new_canvas("Screenshot: mcp.json setup", accent=(35, 119, 170))
+    draw_fake_cursor_shell(draw, "mcp.json")
+
+    draw.rectangle((260, 280, 650, 1160), fill=(28, 36, 49))
+    draw.text((300, 330), "Explorer", font=load_font(34, bold=True), fill=(220, 229, 246))
+    files = [".cursor/", "mcp.json", ".env", "skills/", "README.md"]
+    y = 405
+    for item in files:
+        col = (255, 255, 255) if item == "mcp.json" else (192, 205, 230)
+        draw.text((320, y), item, font=load_font(33, bold=(item == "mcp.json")), fill=col)
+        y += 70
+
+    draw.rectangle((680, 280, 2140, 1160), fill=(18, 24, 35))
+    json_lines = [
+        "{",
+        '  "mcpServers": {',
+        '    "jira": {',
+        '      "command": "python",',
+        '      "args": ["servers/jira_server.py"],',
+        '      "envFile": ".env"',
+        "    },",
+        '    "figma": {',
+        '      "command": "python",',
+        '      "args": ["servers/figma_server.py"],',
+        '      "envFile": ".env"',
+        "    },",
+        '    "bitbucket": {',
+        '      "command": "python",',
+        '      "args": ["servers/bitbucket_server.py"],',
+        '      "envFile": ".env"',
+        "    }",
+        "  }",
+        "}",
     ]
-    for label, center, color in practices:
-        x, y = center
-        draw.ellipse((x - 14, y - 14, x + 14, y + 14), fill=color)
-        draw.text((x + 22, y - 14), label, font=load_font(22), fill=(33, 53, 84))
+    y = 330
+    for idx, line in enumerate(json_lines, start=1):
+        draw.text((720, y), f"{idx:>2}", font=load_font(30), fill=(107, 122, 149))
+        draw.text((790, y), line, font=load_font(32), fill=(220, 231, 248))
+        y += 45
+
+    draw.rounded_rectangle((1760, 1040, 2060, 1130), radius=12, fill=(72, 126, 218))
+    draw.text((1835, 1068), "Save", font=load_font(36, bold=True), fill=(255, 255, 255))
+
+    draw.rounded_rectangle((70, 1020, 1130, 1270), radius=18, fill=(238, 252, 243), outline=(120, 176, 145), width=3)
+    draw.text((108, 1062), "Step 3: Paste config and save file.", font=load_font(40, bold=True), fill=(28, 91, 60))
+    draw.text((108, 1130), "Step 4: Restart Cursor to load servers.", font=load_font(36), fill=(28, 91, 60))
 
     save_image(image, path)
 
 
-def create_skill_lifecycle(path: Path) -> None:
-    width, height = 1800, 1012
-    image = Image.new("RGB", (width, height), (246, 250, 255))
-    draw = ImageDraw.Draw(image)
-    draw_header(draw, "Agent skill lifecycle", width)
+def create_cursor_connection_status_screen(path: Path) -> None:
+    image, draw = new_canvas("Screenshot: verify connections", accent=(24, 135, 96))
+    draw_fake_cursor_shell(draw, "MCP connection status")
 
+    draw.rectangle((260, 300, 2140, 1150), fill=(34, 44, 61))
+    draw.text((320, 360), "MCP Server Status", font=load_font(46, bold=True), fill=(235, 241, 253))
+
+    rows = [
+        ("jira", "Connected", "Read issues, create summaries"),
+        ("figma", "Connected", "Read design tokens and frames"),
+        ("bitbucket", "Connected", "Read repos and pull requests"),
+    ]
+    y = 470
+    for name, status, detail in rows:
+        draw.rounded_rectangle((320, y, 2080, y + 170), radius=16, fill=(48, 61, 84))
+        draw.text((380, y + 45), name, font=load_font(40, bold=True), fill=(230, 238, 252))
+        draw.rounded_rectangle((760, y + 42, 1020, y + 118), radius=12, fill=(66, 162, 97))
+        draw.text((806, y + 62), status, font=load_font(34, bold=True), fill=(255, 255, 255))
+        draw.text((1080, y + 58), detail, font=load_font(34), fill=(214, 225, 246))
+        draw.rounded_rectangle((1850, y + 46, 2030, y + 120), radius=12, fill=(76, 129, 225))
+        draw.text((1890, y + 64), "Test", font=load_font(34, bold=True), fill=(255, 255, 255))
+        y += 210
+
+    draw.rounded_rectangle((70, 1010, 1300, 1270), radius=18, fill=(234, 247, 255), outline=(128, 162, 209), width=3)
+    draw.text((110, 1052), "Step 5: Click Test on each server.", font=load_font(40, bold=True), fill=(35, 59, 99))
+    draw.text((110, 1120), "Step 6: Use a simple prompt to check output.", font=load_font(36), fill=(35, 59, 99))
+
+    save_image(image, path)
+
+
+def create_tutorial_path_visual(path: Path) -> None:
+    image, draw = new_canvas("Spoon-feed tutorial path", accent=(59, 102, 182))
     steps = [
-        ("1. Discover", "Find repeatable workflow"),
-        ("2. Define", "Write skill metadata and prompt"),
-        ("3. Package", "Attach tools and constraints"),
-        ("4. Validate", "Run golden-task tests"),
-        ("5. Publish", "Version and release notes"),
-        ("6. Observe", "Track quality and retire stale"),
+        "1) Install tools",
+        "2) Add tokens",
+        "3) Open MCP settings",
+        "4) Add mcp.json",
+        "5) Test Jira",
+        "6) Test Figma",
+        "7) Test Bitbucket",
+        "8) Build first skill",
     ]
-
-    x = 80
-    y = 290
-    w = 230
-    h = 220
-    gap = 25
-    colors = [
-        (233, 243, 255),
-        (232, 247, 240),
-        (241, 240, 255),
-        (255, 245, 234),
-        (236, 249, 249),
-        (252, 240, 246),
-    ]
-    for idx, (title, subtitle) in enumerate(steps):
+    x = 120
+    y = 360
+    w = 250
+    h = 240
+    gap = 30
+    for idx, step in enumerate(steps):
         box = (x, y, x + w, y + h)
-        draw.rounded_rectangle(box, radius=18, fill=colors[idx], outline=(130, 161, 208), width=3)
-        draw.text((x + 15, y + 22), title, font=load_font(29, bold=True), fill=(31, 53, 88))
-        draw.text((x + 15, y + 88), fill(subtitle, width=18), font=load_font(23), fill=(43, 63, 94))
+        draw.rounded_rectangle(box, radius=18, fill=(237, 245, 255), outline=(126, 157, 208), width=3)
+        draw.text((x + 18, y + 55), fill(step, width=16), font=load_font(33, bold=True), fill=(27, 51, 91))
         if idx < len(steps) - 1:
-            draw_arrow(draw, (x + w, y + h // 2), (x + w + gap - 5, y + h // 2), color=(75, 109, 167))
+            draw_arrow(draw, (x + w, y + h // 2), (x + w + gap - 6, y + h // 2))
         x += w + gap
 
-    draw.rectangle((115, 620, 1480, 790), fill=(236, 243, 255), outline=(148, 170, 214), width=3)
-    code_block = [
-        "skills/",
-        "  jira-ticket-triage/",
-        "    skill.yaml",
-        "    prompts.md",
-        "    tests.json",
-    ]
-    draw.text((150, 650), "\n".join(code_block), font=load_font(31), fill=(36, 60, 96))
-    draw.text((660, 670), "Version each skill and validate against baseline tasks\nbefore publishing to the team registry.", font=load_font(28), fill=(36, 60, 96))
+    draw.rounded_rectangle((170, 760, 2230, 1040), radius=20, fill=(236, 252, 243), outline=(126, 180, 149), width=3)
+    draw.text((230, 820), "Easy method: trainer demo (10 min) -> pair lab (25 min) -> review and fix (15 min).", font=load_font(42, bold=True), fill=(28, 93, 63))
+    draw.text((230, 892), "Everyone should complete one full workflow in the same day.", font=load_font(38), fill=(28, 93, 63))
 
     save_image(image, path)
 
 
-def create_roadmap(path: Path) -> None:
-    width, height = 1800, 1012
-    image = Image.new("RGB", (width, height), (247, 251, 255))
-    draw = ImageDraw.Draw(image)
-    draw_header(draw, "90-day implementation roadmap", width)
-
-    draw.line((170, 420, 1430, 420), fill=(84, 119, 179), width=8)
-    milestones = [
-        (280, "0-30 days", ["Stand up MCP connectors", "Define security controls", "Pilot 2 squads"]),
-        (800, "31-60 days", ["Publish top 10 skills", "Add CI quality checks", "Enable usage analytics"]),
-        (1320, "61-90 days", ["Scale to 6+ squads", "Executive value review", "Production operating model"]),
+def create_daily_workflow_visual(path: Path) -> None:
+    image, draw = new_canvas("Daily team workflow (simple)", accent=(16, 120, 141))
+    blocks = [
+        ("Morning", ["Open Jira tasks", "Plan with Cursor prompt"]),
+        ("Build", ["Write code with Cursor", "Use Figma + Bitbucket context"]),
+        ("Review", ["Run PR checklist skill", "Ask agent for risk summary"]),
+        ("Close", ["Update Jira status", "Save learning to skill library"]),
     ]
-
-    for x, title, bullets in milestones:
-        draw.ellipse((x - 26, 394, x + 26, 446), fill=(36, 94, 178))
-        draw.rounded_rectangle((x - 220, 170, x + 220, 360), radius=20, fill=(234, 242, 255), outline=(129, 160, 209), width=3)
-        draw.text((x - 200, 196), title, font=load_font(33, bold=True), fill=(24, 46, 79))
-        y = 250
-        for item in bullets:
-            draw.text((x - 198, y), f"- {item}", font=load_font(23), fill=(38, 60, 94))
-            y += 38
-
-    draw.rectangle((190, 560, 1410, 780), fill=(237, 251, 244), outline=(126, 182, 148), width=3)
-    draw.text((230, 600), "Exit criteria: >20% cycle-time improvement, >30% prompt reuse, and zero critical governance incidents.", font=load_font(29, bold=True), fill=(27, 93, 60))
-    draw.text((230, 660), "Track KPIs weekly: lead time, review latency, rework rate, automation success rate.", font=load_font(27), fill=(27, 93, 60))
-
-    save_image(image, path)
-
-
-def create_risk_heatmap(path: Path) -> None:
-    width, height = 1800, 1012
-    image = Image.new("RGB", (width, height), (248, 250, 255))
-    draw = ImageDraw.Draw(image)
-    draw_header(draw, "Risk and governance heatmap", width)
-
-    x0, y0 = 220, 170
-    cell = 180
-    colors = {
-        (1, 1): (222, 241, 223),
-        (1, 2): (236, 247, 199),
-        (1, 3): (255, 234, 179),
-        (2, 1): (229, 240, 204),
-        (2, 2): (255, 235, 183),
-        (2, 3): (255, 209, 169),
-        (3, 1): (255, 235, 183),
-        (3, 2): (255, 209, 169),
-        (3, 3): (248, 176, 170),
-    }
-    for i in range(1, 4):
-        for j in range(1, 4):
-            x1 = x0 + (j - 1) * cell
-            y1 = y0 + (3 - i) * cell
-            draw.rectangle((x1, y1, x1 + cell, y1 + cell), fill=colors[(i, j)], outline=(150, 162, 180), width=2)
-
-    draw.text((x0 + 150, y0 + 560), "Impact  ->", font=load_font(26, bold=True), fill=(43, 63, 98))
-    draw.text((90, y0 + 190), "Probability", font=load_font(26, bold=True), fill=(43, 63, 98))
-    draw.text((125, y0 + 225), "(Low to High)", font=load_font(23), fill=(43, 63, 98))
-
-    risk_labels = [
-        ("Over-permissioned tokens", (x0 + 390, y0 + 80)),
-        ("Unreviewed write actions", (x0 + 390, y0 + 260)),
-        ("Inconsistent skill quality", (x0 + 210, y0 + 260)),
-        ("Prompt drift", (x0 + 210, y0 + 440)),
-    ]
-    for label, pos in risk_labels:
-        draw.text(pos, label, font=load_font(22, bold=True), fill=(54, 58, 79))
-
-    draw_box(
-        draw,
-        (850, 180, 1530, 760),
-        "Top controls",
-        [
-            "Role-based access and repository allow-lists",
-            "Human approvals for all state-changing tool calls",
-            "Central audit logs for prompt, action, and output traceability",
-            "Golden-task test suite for each published skill",
-            "Quarterly access review and token rotation",
-        ],
-        fill_color=(238, 246, 255),
-    )
-
-    save_image(image, path)
-
-
-def create_tutorial_flow(path: Path) -> None:
-    width, height = 1800, 1012
-    image = Image.new("RGB", (width, height), (246, 250, 255))
-    draw = ImageDraw.Draw(image)
-    draw_header(draw, "Hands-on training path (step-by-step)", width, accent=(24, 102, 173))
-
-    stages = [
-        ("Step 1", "Prepare environment\nand credentials"),
-        ("Step 2", "Configure MCP\nservers in Cursor"),
-        ("Step 3", "Run Jira, Figma,\nand Bitbucket labs"),
-        ("Step 4", "Create reusable\nagent skills"),
-        ("Step 5", "Add approvals,\nlogs, and KPIs"),
-    ]
-
-    x = 110
-    y = 280
-    w = 290
-    h = 250
-    gap = 42
-    for i, (title, subtitle) in enumerate(stages):
+    x = 220
+    y = 340
+    w = 440
+    h = 560
+    gap = 120
+    colors = [(236, 246, 255), (236, 252, 243), (244, 240, 255), (255, 245, 236)]
+    for idx, (title, lines) in enumerate(blocks):
         box = (x, y, x + w, y + h)
-        draw.rounded_rectangle(box, radius=20, fill=(236, 244, 255), outline=(120, 155, 210), width=3)
-        draw.text((x + 28, y + 32), title, font=load_font(38, bold=True), fill=(24, 50, 90))
-        draw.text((x + 28, y + 108), subtitle, font=load_font(31), fill=(33, 62, 105))
-        if i < len(stages) - 1:
-            draw_arrow(draw, (x + w, y + h // 2), (x + w + gap - 8, y + h // 2), color=(74, 112, 178), width=8)
+        draw_card(draw, box, title, lines, fill_color=colors[idx])
+        if idx < len(blocks) - 1:
+            draw_arrow(draw, (x + w, y + h // 2), (x + w + gap - 20, y + h // 2), width=10)
         x += w + gap
 
-    draw.rectangle((150, 640, 1660, 862), fill=(236, 251, 244), outline=(126, 182, 148), width=3)
-    draw.text((190, 690), "Delivery model: 20% theory + 80% labs, pair exercises, and weekly office hours.", font=load_font(34, bold=True), fill=(26, 92, 58))
-    draw.text((190, 750), "Success check: every developer completes one end-to-end workflow and publishes one skill.", font=load_font(30), fill=(26, 92, 58))
+    save_image(image, path)
+
+
+def create_risk_controls_visual(path: Path) -> None:
+    image, draw = new_canvas("Risk controls in plain English", accent=(42, 98, 172))
+    controls = [
+        ("Use low access tokens", "Only give needed access.\nDo not use admin tokens."),
+        ("Ask approval before write", "Any status change or merge\nneeds human approval."),
+        ("Keep logs", "Save prompt, tool call,\nand final output."),
+        ("Check weekly KPIs", "Review failures and remove\nunused skills."),
+    ]
+    x = 120
+    y = 320
+    w = 520
+    h = 420
+    gap = 58
+    for idx, (title, desc) in enumerate(controls):
+        row = idx // 2
+        col = idx % 2
+        x1 = x + col * (w + gap)
+        y1 = y + row * (h + 100)
+        box = (x1, y1, x1 + w, y1 + h)
+        draw.rounded_rectangle(box, radius=24, fill=(237, 246, 255), outline=(126, 159, 208), width=4)
+        draw.ellipse((x1 + 26, y1 + 26, x1 + 120, y1 + 120), fill=(56, 114, 200))
+        draw.text((x1 + 61, y1 + 50), str(idx + 1), font=load_font(44, bold=True), fill=(255, 255, 255))
+        draw.text((x1 + 140, y1 + 42), title, font=load_font(40, bold=True), fill=(27, 49, 88))
+        draw.text((x1 + 42, y1 + 152), desc, font=load_font(34), fill=(42, 62, 96))
+
+    draw.rounded_rectangle((1220, 320, 2270, 840), radius=24, fill=(236, 252, 243), outline=(126, 181, 149), width=4)
+    draw.text((1270, 372), "Simple weekly checklist", font=load_font(46, bold=True), fill=(28, 95, 61))
+    checklist = [
+        "1. Review failed MCP calls.",
+        "2. Fix or disable weak prompts.",
+        "3. Rotate old tokens.",
+        "4. Publish one improved skill.",
+    ]
+    y = 470
+    for item in checklist:
+        draw.text((1280, y), item, font=load_font(34), fill=(28, 95, 61))
+        y += 86
+
+    save_image(image, path)
+
+
+def create_roadmap_visual(path: Path) -> None:
+    image, draw = new_canvas("30-60-90 day rollout plan", accent=(25, 109, 168))
+    draw.line((220, 720, 2180, 720), fill=(73, 112, 177), width=12)
+    phases = [
+        (500, "Day 0-30", ["Connect Jira/Figma/Bitbucket", "Train first squad", "Set KPI baseline"]),
+        (1200, "Day 31-60", ["Publish 6 core skills", "Run weekly office hours", "Track adoption"]),
+        (1900, "Day 61-90", ["Scale to more squads", "Improve weak prompts", "Share business impact"]),
+    ]
+    for x, title, lines in phases:
+        draw.ellipse((x - 36, 684, x + 36, 756), fill=(35, 94, 177))
+        draw.rounded_rectangle((x - 300, 280, x + 300, 620), radius=22, fill=(235, 244, 255), outline=(128, 159, 207), width=4)
+        draw.text((x - 250, 320), title, font=load_font(48, bold=True), fill=(26, 48, 83))
+        yy = 410
+        for line in lines:
+            draw.text((x - 250, yy), f"- {line}", font=load_font(33), fill=(40, 60, 94))
+            yy += 70
+
+    draw.rounded_rectangle((260, 860, 2140, 1130), radius=20, fill=(236, 252, 243), outline=(126, 180, 149), width=3)
+    draw.text((320, 930), "Success target: 20% faster delivery with safe controls and clear audit logs.", font=load_font(44, bold=True), fill=(26, 92, 60))
+    draw.text((320, 995), "Main KPIs: cycle time, PR lead time, reopen rate, prompt reuse.", font=load_font(38), fill=(26, 92, 60))
 
     save_image(image, path)
 
@@ -416,52 +459,30 @@ def create_tutorial_flow(path: Path) -> None:
 def generate_images() -> dict:
     ASSETS_DIR.mkdir(exist_ok=True)
     files = {
-        "title": ASSETS_DIR / "title_visual.png",
-        "capabilities": ASSETS_DIR / "capability_chart.png",
-        "architecture": ASSETS_DIR / "architecture.png",
-        "jira": ASSETS_DIR / "jira_mcp.png",
-        "figma": ASSETS_DIR / "figma_mcp.png",
-        "bitbucket": ASSETS_DIR / "bitbucket_mcp.png",
-        "effectiveness": ASSETS_DIR / "effectiveness_matrix.png",
-        "skills": ASSETS_DIR / "skill_lifecycle.png",
-        "risk": ASSETS_DIR / "risk_heatmap.png",
-        "roadmap": ASSETS_DIR / "roadmap.png",
-        "tutorial": ASSETS_DIR / "tutorial_flow.png",
+        "cover": ASSETS_DIR / "cover_visual.png",
+        "top_mcp": ASSETS_DIR / "top_mcp_tools.png",
+        "top_skills": ASSETS_DIR / "top_agent_skills.png",
+        "architecture": ASSETS_DIR / "simple_architecture.png",
+        "settings_screen": ASSETS_DIR / "cursor_settings_screen.png",
+        "mcp_json_screen": ASSETS_DIR / "cursor_mcp_json_screen.png",
+        "status_screen": ASSETS_DIR / "cursor_status_screen.png",
+        "tutorial_path": ASSETS_DIR / "tutorial_path.png",
+        "daily_workflow": ASSETS_DIR / "daily_workflow.png",
+        "risk_controls": ASSETS_DIR / "risk_controls_simple.png",
+        "roadmap": ASSETS_DIR / "roadmap_30_60_90.png",
     }
 
-    create_title_visual(files["title"])
-    create_capability_chart(files["capabilities"])
-    create_architecture(files["architecture"])
-    create_mcp_service_diagram(
-        files["jira"],
-        "Jira",
-        (6, 90, 180),
-        ["Issue summaries", "Backlog and sprint state", "Comments and links"],
-        ["Draft acceptance criteria", "Generate test scenarios", "Summarize blockers"],
-        ["Faster triage", "Higher ticket clarity", "Lower reopen rates"],
-    )
-    create_mcp_service_diagram(
-        files["figma"],
-        "Figma",
-        (53, 94, 59),
-        ["Design tokens", "Components and variants", "Frame comments"],
-        ["Generate implementation notes", "Map specs to UI stories", "Flag design-code drift"],
-        ["Fewer handoff defects", "Lower UI rework", "Faster design-to-code flow"],
-    )
-    create_mcp_service_diagram(
-        files["bitbucket"],
-        "Bitbucket",
-        (0, 96, 136),
-        ["Repository structure", "Commits and diffs", "Pull request history"],
-        ["Draft PR descriptions", "Generate review checklists", "Summarize release deltas"],
-        ["Reduced PR lead time", "Better review quality", "Higher delivery confidence"],
-    )
-    create_effectiveness_matrix(files["effectiveness"])
-    create_skill_lifecycle(files["skills"])
-    create_risk_heatmap(files["risk"])
-    create_roadmap(files["roadmap"])
-    create_tutorial_flow(files["tutorial"])
-
+    create_cover_visual(files["cover"])
+    create_top_mcp_visual(files["top_mcp"])
+    create_top_skills_visual(files["top_skills"])
+    create_architecture_visual(files["architecture"])
+    create_cursor_settings_screen(files["settings_screen"])
+    create_cursor_mcp_json_screen(files["mcp_json_screen"])
+    create_cursor_connection_status_screen(files["status_screen"])
+    create_tutorial_path_visual(files["tutorial_path"])
+    create_daily_workflow_visual(files["daily_workflow"])
+    create_risk_controls_visual(files["risk_controls"])
+    create_roadmap_visual(files["roadmap"])
     return files
 
 
@@ -473,30 +494,30 @@ def style_title(shape, text: str) -> None:
     run.text = text
     run.font.size = Pt(34)
     run.font.bold = True
-    run.font.color.rgb = RGBColor(21, 42, 75)
+    run.font.color.rgb = RGBColor(20, 40, 74)
     p.alignment = PP_ALIGN.LEFT
 
 
 def add_title_block(slide, title: str, subtitle: str | None = None) -> None:
-    title_box = slide.shapes.add_textbox(Inches(0.45), Inches(0.16), Inches(12.2), Inches(0.7))
+    title_box = slide.shapes.add_textbox(Inches(0.45), Inches(0.16), Inches(12.2), Inches(0.72))
     style_title(title_box, title)
     if subtitle:
-        sub_box = slide.shapes.add_textbox(Inches(0.48), Inches(0.82), Inches(12), Inches(0.45))
+        sub_box = slide.shapes.add_textbox(Inches(0.48), Inches(0.82), Inches(12.2), Inches(0.46))
         tf = sub_box.text_frame
         tf.clear()
         p = tf.paragraphs[0]
         run = p.add_run()
         run.text = subtitle
         run.font.size = Pt(18)
-        run.font.color.rgb = RGBColor(70, 88, 118)
+        run.font.color.rgb = RGBColor(68, 86, 120)
 
 
-def add_bullets(slide, items, x=0.55, y=1.35, w=5.5, h=5.65) -> None:
+def add_bullets(slide, lines, x=0.55, y=1.4, w=5.4, h=5.6, level0_size=21, level1_size=17) -> None:
     text_box = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tf = text_box.text_frame
     tf.clear()
     tf.word_wrap = True
-    for idx, item in enumerate(items):
+    for idx, item in enumerate(lines):
         if isinstance(item, tuple):
             text, level = item
         else:
@@ -504,32 +525,30 @@ def add_bullets(slide, items, x=0.55, y=1.35, w=5.5, h=5.65) -> None:
         p = tf.paragraphs[0] if idx == 0 else tf.add_paragraph()
         p.text = text
         p.level = level
-        p.font.size = Pt(22 if level == 0 else 18)
-        p.font.color.rgb = RGBColor(35, 52, 82)
-        p.space_after = Pt(10)
-        p.space_before = Pt(2)
+        p.font.size = Pt(level0_size if level == 0 else level1_size)
+        p.font.color.rgb = RGBColor(35, 53, 84)
+        p.space_after = Pt(8)
 
 
-def add_image(slide, image_path: Path, x=6.2, y=1.3, w=6.8) -> None:
+def add_image(slide, image_path: Path, x=6.0, y=1.25, w=7.1) -> None:
     slide.shapes.add_picture(str(image_path), Inches(x), Inches(y), width=Inches(w))
 
 
-def add_code_block(slide, code_lines, x=0.55, y=1.65, w=12.2, h=5.45) -> None:
+def add_code_block(slide, code_lines, x=0.55, y=1.75, w=12.2, h=5.2, font_size=14) -> None:
     block = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(x), Inches(y), Inches(w), Inches(h))
     block.fill.solid()
-    block.fill.fore_color.rgb = RGBColor(24, 33, 52)
-    block.line.color.rgb = RGBColor(24, 33, 52)
-
+    block.fill.fore_color.rgb = RGBColor(22, 31, 49)
+    block.line.color.rgb = RGBColor(22, 31, 49)
     tf = block.text_frame
     tf.clear()
     tf.word_wrap = True
     for idx, line in enumerate(code_lines):
         p = tf.paragraphs[0] if idx == 0 else tf.add_paragraph()
         p.text = line
-        p.font.size = Pt(15)
         p.font.name = "DejaVu Sans Mono"
-        p.font.color.rgb = RGBColor(232, 238, 252)
-        p.space_after = Pt(3)
+        p.font.size = Pt(font_size)
+        p.font.color.rgb = RGBColor(228, 236, 252)
+        p.space_after = Pt(1)
         p.space_before = Pt(0)
 
 
@@ -539,200 +558,221 @@ def build_presentation(images: dict) -> None:
     prs.slide_height = Inches(7.5)
     blank = prs.slide_layouts[6]
 
-    # Slide 1: Cover
+    # 1) Cover
     slide = prs.slides.add_slide(blank)
     add_title_block(
         slide,
         "Solution Assessment: Cursor AI Capabilities and Integration Review",
-        "Training edition with step-by-step labs, commands, and adoption model.",
+        "Spoon-feed training edition: simple English, clear steps, and full tutorial.",
     )
     add_bullets(
         slide,
         [
-            "Objective: evaluate technical fit, operating readiness, and governance controls.",
-            "Scope: IDE productivity, workflow automation, and enterprise integration design.",
-            f"Date: {datetime.now().strftime('%Y-%m-%d')}",
+            "What this deck gives you:",
+            ("- Top MCP tools for development", 1),
+            ("- Top agent skills to start fast", 1),
+            ("- Step-by-step setup in Cursor", 1),
+            ("- Commands your team can copy and run", 1),
+            f"Updated: {datetime.now().strftime('%Y-%m-%d')}",
         ],
         x=0.6,
         y=1.55,
-        w=5.3,
+        w=5.2,
         h=4.8,
     )
-    add_image(slide, images["title"], x=5.95, y=1.2, w=7.15)
+    add_image(slide, images["cover"], x=5.95, y=1.22, w=7.15)
 
-    # Slide 2: Agenda
+    # 2) Learning goals
     slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "Agenda")
+    add_title_block(slide, "What your team will learn (easy words)")
     add_bullets(
         slide,
         [
-            "1) Capability assessment and current maturity baseline",
-            "2) MCP integration patterns for Jira, Figma, and Bitbucket",
-            "3) Effective usage model for developers and team leads",
-            "4) Hands-on tutorial with setup and commands",
-            "5) How to add and maintain agent skills",
-            "6) Governance controls, KPI tracking, and 90-day roadmap",
+            "1) What MCP is and why it helps developers.",
+            "2) Which MCP tools give the fastest value.",
+            "3) How to connect Jira, Figma, and Bitbucket in Cursor.",
+            "4) How to create reusable agent skills.",
+            "5) How to use safe controls so automation stays trusted.",
         ],
         x=0.9,
-        y=1.5,
-        w=11.5,
-        h=5.7,
+        y=1.55,
+        w=11.2,
+        h=5.6,
+        level0_size=26,
     )
 
-    # Slide 3: Training approach
+    # 3) Agenda
     slide = prs.slides.add_slide(blank)
-    add_title_block(
-        slide,
-        "Developer Training Approach (Easy Adoption)",
-        "Run this as a 4-week plan: 20% concepts + 80% practical labs.",
-    )
+    add_title_block(slide, "Agenda (spoon-feed order)")
     add_bullets(
         slide,
         [
-            "Week 1: foundation and MCP setup by each developer.",
-            "Week 2: Jira, Figma, and Bitbucket workflow labs.",
-            "Week 3: prompt standardization and quality gates.",
-            "Week 4: skill creation, versioning, and team rollout.",
+            "Part A: Top MCP tools for development",
+            "Part B: Top agent skills for developers",
+            "Part C: Step-by-step Cursor setup tutorial",
+            "Part D: Daily workflow your team can follow",
+            "Part E: Risk controls + 30-60-90 rollout plan",
         ],
+        x=0.95,
+        y=1.55,
+        w=11.0,
+        h=5.6,
+        level0_size=25,
     )
-    add_image(slide, images["tutorial"], x=6.05, y=1.25, w=7.0)
 
-    # Slide 4: Capability assessment
+    # 4) Top MCP tools
     slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "Assessment Snapshot: Cursor AI Capability Maturity")
+    add_title_block(slide, "Top MCP tools that help development teams most")
     add_bullets(
         slide,
         [
-            "Overall readiness is strong for a controlled pilot: 3.8 / 5.0.",
-            "Strongest dimensions: code generation, refactoring, and context-aware assistance.",
-            "Main gaps: standardized workflow recipes, governance instrumentation, and skill reuse.",
-            "Recommendation: pilot with two squads and centralized enablement support.",
+            "Pick these first in your pilot:",
+            ("1) Bitbucket/Git MCP", 1),
+            ("2) Jira MCP", 1),
+            ("3) Figma MCP", 1),
+            ("4) Docs MCP", 1),
+            ("5) CI/CD MCP", 1),
+            ("6) Database MCP", 1),
         ],
     )
-    add_image(slide, images["capabilities"], x=5.95, y=1.25, w=7.1)
+    add_image(slide, images["top_mcp"], x=5.95, y=1.23, w=7.15)
 
-    # Slide 5: Architecture
+    # 5) Top skills
     slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "Target Integration Architecture (MCP + Cursor Agents)")
+    add_title_block(slide, "Top agent skills to create first")
     add_bullets(
         slide,
         [
-            "MCP servers expose enterprise tools using normalized schemas for agents.",
-            "Use least-privilege service accounts and repository/project allow-lists.",
-            "Require human approval for state-changing actions (status updates, merges).",
-            "Log prompts, tool calls, and outputs for audit and compliance traceability.",
+            "Build a small skill library in week 1:",
+            ("- jira-ticket-triage", 1),
+            ("- figma-handoff", 1),
+            ("- pr-quality-check", 1),
+            ("- release-note-writer", 1),
+            ("- bug-root-cause", 1),
+            ("- test-case-generator", 1),
         ],
     )
-    add_image(slide, images["architecture"], x=5.95, y=1.25, w=7.1)
+    add_image(slide, images["top_skills"], x=5.95, y=1.23, w=7.15)
 
-    # Slide 6: Jira MCP
+    # 6) Architecture
     slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "MCP for Jira: Workflow Automation Opportunities")
+    add_title_block(slide, "How the connection works (simple architecture)")
     add_bullets(
         slide,
         [
-            "Use cases: ticket summarization, acceptance criteria drafting, and test scenario generation.",
-            "Setup: Jira token, MCP Jira server configuration, project and issue filters.",
-            "Guardrails: no automatic status transitions without explicit user confirmation.",
-            "KPIs: grooming time, cycle time, reopen rate, and requirement clarity.",
+            "Tools -> MCP layer -> Cursor -> Governance",
+            "MCP gives one common interface for each tool.",
+            "Cursor uses prompts + skills to call those tools.",
+            "Team rules control access, approvals, and logs.",
         ],
     )
-    add_image(slide, images["jira"], x=5.95, y=1.25, w=7.1)
+    add_image(slide, images["architecture"], x=5.95, y=1.23, w=7.15)
 
-    # Slide 7: Figma MCP
+    # 7) Tutorial map
     slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "MCP for Figma: Design-to-Code Acceleration")
+    add_title_block(slide, "Tutorial map: follow these 8 steps")
     add_bullets(
         slide,
         [
-            "Use cases: extract design tokens, generate implementation notes, map components to stories.",
-            "Setup: scoped Figma token, design-system mapping, and project-level permissions.",
-            "Guardrails: read-only access in production design files; write only in sandbox.",
-            "KPIs: handoff defects, UI rework effort, and design implementation lead time.",
+            "Trainer flow for one session (about 90 minutes):",
+            ("10 min demo + 25 min pair lab + 15 min review", 1),
+            ("Repeat for Jira, Figma, and Bitbucket", 1),
+            ("End with one reusable skill per developer", 1),
         ],
     )
-    add_image(slide, images["figma"], x=5.95, y=1.25, w=7.1)
+    add_image(slide, images["tutorial_path"], x=5.95, y=1.23, w=7.15)
 
-    # Slide 8: Bitbucket MCP
+    # 8) Step 1 commands
     slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "MCP for Bitbucket: Source Control Intelligence")
-    add_bullets(
-        slide,
-        [
-            "Use cases: repository analysis, PR description drafts, and review checklist generation.",
-            "Setup: OAuth/app password, branch protections, and repository allow-list.",
-            "Guardrails: protected branches, mandatory reviewer, and CI pass before merge.",
-            "KPIs: PR lead time, review latency, escaped defect rate, and release quality.",
-        ],
-    )
-    add_image(slide, images["bitbucket"], x=5.95, y=1.25, w=7.1)
-
-    # Slide 9: Effective usage
-    slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "How to Use Cursor + MCP Effectively")
-    add_bullets(
-        slide,
-        [
-            "Standardize prompts as reusable recipes for common engineering tasks.",
-            "Start with assistant mode, then scale to agent actions with approval checkpoints.",
-            "Attach each workflow to quality gates and a clear Definition of Done.",
-            "Review adoption and quality metrics weekly; retire low-value automations quickly.",
-        ],
-    )
-    add_image(slide, images["effectiveness"], x=5.95, y=1.25, w=7.1)
-
-    # Slide 10: Agent skills
-    slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "How to Add Agent Skills")
-    add_bullets(
-        slide,
-        [
-            "A skill package should include metadata, prompts, tools, and validation tests.",
-            "Use a versioned registry and changelog for transparent rollout and rollback.",
-            "Test each skill on golden tasks before publishing to teams.",
-            "Run monthly quality reviews to improve prompts and remove stale skills.",
-        ],
-    )
-    add_image(slide, images["skills"], x=5.95, y=1.25, w=7.1)
-
-    # Slide 11: Tutorial step 1
-    slide = prs.slides.add_slide(blank)
-    add_title_block(
-        slide,
-        "Tutorial Step 1: Local Environment Setup",
-        "Run these commands once per developer machine.",
-    )
+    add_title_block(slide, "Step 1: Prepare local machine (copy and run)")
     add_code_block(
         slide,
         [
-            "# 1) Create training workspace",
             "mkdir -p ~/cursor-mcp-training/{servers,skills,logs} && cd ~/cursor-mcp-training",
-            "",
-            "# 2) Create Python environment for helper scripts",
             "python3 -m venv .venv",
             "source .venv/bin/activate",
             "python -m pip install --upgrade pip",
             "pip install mcp httpx python-dotenv pyyaml",
-            "",
-            "# 3) Verify runtime versions",
             "python --version && node --version && npm --version",
-            "",
-            "# 4) Optional CLI helper",
             "sudo apt-get update && sudo apt-get install -y jq",
+            "",
+            "# Create environment file for tokens",
+            "cat > .env <<'EOF'",
+            "JIRA_BASE_URL=https://your-company.atlassian.net",
+            "JIRA_EMAIL=you@company.com",
+            "JIRA_API_TOKEN=<jira_token>",
+            "FIGMA_TOKEN=<figma_token>",
+            "BITBUCKET_WORKSPACE=<workspace>",
+            "BITBUCKET_USERNAME=<username>",
+            "BITBUCKET_APP_PASSWORD=<app_password>",
+            "EOF",
         ],
+        y=1.55,
+        h=5.8,
+        font_size=14,
     )
 
-    # Slide 12: Tutorial step 2
+    # 9) Step 2 screenshot
     slide = prs.slides.add_slide(blank)
-    add_title_block(
+    add_title_block(slide, "Step 2: Open Cursor settings and go to MCP")
+    add_bullets(
         slide,
-        "Tutorial Step 2: Configure MCP Servers in Cursor",
-        "Use this as a template and replace placeholders with your values.",
+        [
+            "Click Settings in Cursor.",
+            "Open Features tab.",
+            "Open MCP section.",
+            "Turn MCP ON.",
+            "Click Open mcp.json.",
+        ],
+        x=0.55,
+        y=1.55,
+        w=4.8,
+        h=5.5,
+        level0_size=25,
+    )
+    add_image(slide, images["settings_screen"], x=5.35, y=1.22, w=7.75)
+
+    # 10) Step 3 screenshot + config
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Step 3: Add mcp.json config in Cursor")
+    add_bullets(
+        slide,
+        [
+            "Paste this config in .cursor/mcp.json:",
+            "Use your own server script paths.",
+            "Save file and restart Cursor.",
+        ],
+        x=0.55,
+        y=1.4,
+        w=5.2,
+        h=1.8,
+        level0_size=22,
     )
     add_code_block(
         slide,
         [
-            "# 1) Store credentials",
+            "{",
+            '  "mcpServers": {',
+            '    "jira": {"command":"python","args":["servers/jira_server.py"],"envFile":".env"},',
+            '    "figma": {"command":"python","args":["servers/figma_server.py"],"envFile":".env"},',
+            '    "bitbucket": {"command":"python","args":["servers/bitbucket_server.py"],"envFile":".env"}',
+            "  }",
+            "}",
+        ],
+        x=0.55,
+        y=3.0,
+        w=5.2,
+        h=3.95,
+        font_size=13,
+    )
+    add_image(slide, images["mcp_json_screen"], x=5.95, y=1.22, w=7.15)
+
+    # 11) Step 4 token file
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Step 4: Add tokens in .env file")
+    add_code_block(
+        slide,
+        [
             "cat > .env <<'EOF'",
             "JIRA_BASE_URL=https://your-company.atlassian.net",
             "JIRA_EMAIL=you@company.com",
@@ -743,183 +783,182 @@ def build_presentation(images: dict) -> None:
             "BITBUCKET_APP_PASSWORD=<app_password>",
             "EOF",
             "",
-            "# 2) Cursor MCP config",
-            "mkdir -p .cursor",
-            "cat > .cursor/mcp.json <<'JSON'",
-            "{\"mcpServers\":{\"jira\":{\"command\":\"python\",\"args\":[\"servers/jira_server.py\"],\"envFile\":\".env\"},\"figma\":{\"command\":\"python\",\"args\":[\"servers/figma_server.py\"],\"envFile\":\".env\"},\"bitbucket\":{\"command\":\"python\",\"args\":[\"servers/bitbucket_server.py\"],\"envFile\":\".env\"}}}",
-            "JSON",
+            "# Keep .env out of git",
+            "echo '.env' >> .gitignore",
         ],
+        y=1.9,
+        h=4.95,
+        font_size=15,
     )
-
-    # Slide 13: Tutorial step 3
-    slide = prs.slides.add_slide(blank)
-    add_title_block(
-        slide,
-        "Tutorial Step 3: Jira Lab (Ticket Triage + Acceptance Criteria)",
-        "First validate API access, then run the workflow from Cursor chat.",
-    )
-    add_code_block(
+    add_bullets(
         slide,
         [
-            "source .venv/bin/activate && source .env",
-            "",
-            "# Validate Jira token and user",
-            "curl -s -u \"$JIRA_EMAIL:$JIRA_API_TOKEN\" \"$JIRA_BASE_URL/rest/api/3/myself\" | jq '.displayName'",
-            "",
-            "# Pull latest issues from a project",
-            "curl -s -u \"$JIRA_EMAIL:$JIRA_API_TOKEN\" -G \"$JIRA_BASE_URL/rest/api/3/search\" --data-urlencode 'jql=project = PROJ ORDER BY updated DESC' --data-urlencode 'maxResults=5' | jq '.issues[].key'",
-            "",
-            "# Prompt in Cursor",
-            "Prompt: \"Using Jira MCP, summarize PROJ-101, draft acceptance criteria, and produce test cases.\"",
-            "Prompt: \"Generate status update with blockers, risks, and next actions for standup.\"",
+            "Important:",
+            ("Never commit .env to repository.", 1),
+            ("Rotate tokens every 90 days.", 1),
         ],
+        x=0.65,
+        y=6.95,
+        w=12.0,
+        h=0.5,
+        level0_size=17,
+        level1_size=15,
     )
 
-    # Slide 14: Tutorial step 4
+    # 12) Step 5 Jira
     slide = prs.slides.add_slide(blank)
-    add_title_block(
+    add_title_block(slide, "Step 5: Test Jira connection")
+    add_bullets(
         slide,
-        "Tutorial Step 4: Figma Lab (Design-to-Code Handoff)",
-        "Validate token, then generate implementation checklist and tasks.",
+        [
+            "Run test command:",
+            ("curl -s -u \"$JIRA_EMAIL:$JIRA_API_TOKEN\" \"$JIRA_BASE_URL/rest/api/3/myself\" | jq '.displayName'", 1),
+            "Then ask in Cursor:",
+            ('"Using Jira MCP, summarize PROJ-101 and draft acceptance criteria."', 1),
+        ],
+        x=0.55,
+        y=1.55,
+        w=5.2,
+        h=5.2,
+        level0_size=22,
+        level1_size=15,
     )
+    add_image(slide, images["status_screen"], x=5.95, y=1.22, w=7.15)
+
+    # 13) Step 6 Figma
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Step 6: Test Figma connection")
     add_code_block(
         slide,
         [
             "source .venv/bin/activate && source .env",
             "export FIGMA_FILE_KEY=<file_key>",
-            "",
-            "# Validate Figma API access",
             "curl -s -H \"X-Figma-Token: $FIGMA_TOKEN\" \"https://api.figma.com/v1/files/$FIGMA_FILE_KEY\" | jq '.name'",
             "",
-            "# Prompts in Cursor",
-            "Prompt: \"Using Figma MCP, extract colors, spacing, and typography tokens.\"",
-            "Prompt: \"Map components in frame HomePage to frontend stories with acceptance criteria.\"",
-            "Prompt: \"Create UI handoff checklist including responsive and accessibility checks.\"",
+            "# Prompt in Cursor",
+            "Using Figma MCP, extract design tokens and map components to frontend stories.",
         ],
+        x=0.55,
+        y=1.95,
+        w=5.2,
+        h=4.9,
+        font_size=14,
     )
+    add_image(slide, images["status_screen"], x=5.95, y=1.22, w=7.15)
 
-    # Slide 15: Tutorial step 5
+    # 14) Step 7 Bitbucket
     slide = prs.slides.add_slide(blank)
-    add_title_block(
-        slide,
-        "Tutorial Step 5: Bitbucket Lab (PR Review and Release Notes)",
-        "Use repo metadata + prompts to speed up review quality.",
-    )
+    add_title_block(slide, "Step 7: Test Bitbucket connection")
     add_code_block(
         slide,
         [
             "source .venv/bin/activate && source .env",
+            "curl -s -u \"$BITBUCKET_USERNAME:$BITBUCKET_APP_PASSWORD\" \\",
+            "  \"https://api.bitbucket.org/2.0/repositories/$BITBUCKET_WORKSPACE\" | jq '.values[0].full_name'",
             "",
-            "# Validate Bitbucket workspace access",
-            "curl -s -u \"$BITBUCKET_USERNAME:$BITBUCKET_APP_PASSWORD\" \"https://api.bitbucket.org/2.0/repositories/$BITBUCKET_WORKSPACE\" | jq '.values[0].full_name'",
-            "",
-            "# Prompts in Cursor",
-            "Prompt: \"Using Bitbucket MCP, summarize PR #123 and list functional risk areas.\"",
-            "Prompt: \"Generate a reviewer checklist focused on tests, security, and rollback plan.\"",
-            "Prompt: \"Create release notes from commits merged since previous release tag.\"",
+            "# Prompt in Cursor",
+            "Using Bitbucket MCP, summarize PR #123 and create review checklist.",
         ],
+        x=0.55,
+        y=1.95,
+        w=5.2,
+        h=4.9,
+        font_size=14,
     )
+    add_image(slide, images["status_screen"], x=5.95, y=1.22, w=7.15)
 
-    # Slide 16: Tutorial step 6
+    # 15) Step 8 skill creation
     slide = prs.slides.add_slide(blank)
-    add_title_block(
-        slide,
-        "Tutorial Step 6: Add Agent Skills (Reusable Team Assets)",
-        "Each skill should include metadata, prompt contract, and test cases.",
-    )
+    add_title_block(slide, "Step 8: Build your first agent skill")
     add_code_block(
         slide,
         [
-            "# Create skill directory",
             "mkdir -p skills/jira-ticket-triage && cd skills/jira-ticket-triage",
-            "",
             "cat > skill.yaml <<'YAML'",
             "name: jira-ticket-triage",
             "version: 1.0.0",
-            "description: Triage issue and output action plan",
+            "description: Triage issue and return action plan",
             "tools: [jira.search, jira.get_issue]",
             "YAML",
             "",
             "cat > prompts.md <<'MD'",
-            "# Inputs: issue key, team context, definition of done",
+            "# Inputs: issue_key, team_context, done_definition",
             "# Output: summary, acceptance criteria, test cases",
             "MD",
             "",
-            "echo '[{\"input\":\"PROJ-101\",\"assert_contains\":[\"Summary\",\"Acceptance Criteria\"]}]' > tests.json",
+            "echo '[{\"input\":\"PROJ-101\",\"assert_contains\":[\"Summary\",\"Acceptance\"]}]' > tests.json",
         ],
+        y=1.75,
+        h=5.5,
+        font_size=14,
     )
 
-    # Slide 17: Tutorial step 7
+    # 16) Daily workflow
     slide = prs.slides.add_slide(blank)
-    add_title_block(
-        slide,
-        "Tutorial Step 7: Governance and KPI Operations",
-        "Use scheduled scripts and weekly reviews to sustain adoption quality.",
-    )
-    add_code_block(
-        slide,
-        [
-            "# Example weekly KPI export (replace script names with your internal tooling)",
-            "mkdir -p logs metrics",
-            "python scripts/export_mcp_logs.py --last-days 7 > logs/mcp_weekly.json",
-            "python scripts/calc_kpis.py --input logs/mcp_weekly.json --output metrics/weekly_kpis.csv",
-            "",
-            "# KPI template",
-            "echo 'date,cycle_time,pr_lead_time,reopen_rate,prompt_reuse,automation_success' > metrics/template.csv",
-            "",
-            "# Weekly review checklist",
-            "echo 'Review failed automations, stale skills, and permission scope' > logs/weekly_review.txt",
-            "echo 'Approve next sprint improvements based on KPI trends' >> logs/weekly_review.txt",
-        ],
-    )
-
-    # Slide 18: Risk and governance
-    slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "Risk Management and Governance Controls")
+    add_title_block(slide, "Daily workflow your team can follow")
     add_bullets(
         slide,
         [
-            "Top risks: over-permissioned tokens, unreviewed write actions, and prompt drift.",
-            "Controls: RBAC, approval checkpoints, central logs, and benchmark test suites.",
-            "Security baseline: vault secrets, rotate credentials every 90 days, anomaly alerts.",
-            "Ownership: platform team manages MCP; squad leads manage skill effectiveness.",
+            "Keep it simple:",
+            ("Morning plan -> Build -> Review -> Close", 1),
+            ("Save good prompts as team skills", 1),
+            ("Do weekly quality review", 1),
         ],
     )
-    add_image(slide, images["risk"], x=5.95, y=1.25, w=7.1)
+    add_image(slide, images["daily_workflow"], x=5.95, y=1.23, w=7.15)
 
-    # Slide 19: Roadmap
+    # 17) Risk controls
     slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "90-Day Rollout Roadmap")
+    add_title_block(slide, "Risk Management and Governance Controls (simple)")
     add_bullets(
         slide,
         [
-            "Days 0-30: establish MCP connectors, security controls, and baseline metrics.",
-            "Days 31-60: publish high-value skills, add CI quality gates, and train champions.",
-            "Days 61-90: scale to additional squads and report quantified business impact.",
-            "Success target: >20% cycle-time improvement without governance incidents.",
+            "Four must-have controls:",
+            ("1) Low-access tokens", 1),
+            ("2) Human approval for write actions", 1),
+            ("3) Audit logs for every automation", 1),
+            ("4) Weekly KPI and failure review", 1),
         ],
     )
-    add_image(slide, images["roadmap"], x=5.95, y=1.25, w=7.1)
+    add_image(slide, images["risk_controls"], x=5.95, y=1.23, w=7.15)
 
-    # Slide 20: Close
+    # 18) Roadmap
     slide = prs.slides.add_slide(blank)
-    add_title_block(slide, "Recommended Next Steps")
+    add_title_block(slide, "30-60-90 day adoption roadmap")
     add_bullets(
         slide,
         [
-            "Approve pilot scope and select 2-3 candidate squads.",
-            "Assign owners for MCP platform, security controls, and skill registry.",
-            "Start weekly steering reviews using KPI dashboard outputs.",
-            "Plan executive checkpoint at day 45 and day 90.",
+            "0-30 days: connect tools and train first squad.",
+            "31-60 days: publish top skills and run office hours.",
+            "61-90 days: scale to more teams and report KPI impact.",
+            "Target: 20% faster delivery with safe controls.",
+        ],
+    )
+    add_image(slide, images["roadmap"], x=5.95, y=1.23, w=7.15)
+
+    # 19) Final checklist
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Final checklist for trainer and team")
+    add_bullets(
+        slide,
+        [
+            "Before session:",
+            ("Tokens ready and mcp.json template prepared", 1),
+            ("Pilot repo, Jira project, and Figma file selected", 1),
+            "During session:",
+            ("Everyone completes one end-to-end workflow", 1),
+            ("Everyone creates at least one simple skill", 1),
+            "After session:",
+            ("Review KPIs and improve weak prompts weekly", 1),
             "",
             "Q&A",
         ],
         x=0.9,
-        y=1.6,
-        w=5.5,
-        h=5.4,
+        y=1.55,
+        w=5.2,
+        h=5.8,
     )
-    add_image(slide, images["title"], x=5.95, y=1.25, w=7.1)
+    add_image(slide, images["cover"], x=5.95, y=1.22, w=7.15)
 
     prs.save(OUTPUT_FILE)
 
