@@ -39,6 +39,39 @@ Create these six starter skills:
 
 ---
 
+## Prompt formula cheat sheet (always use this)
+
+Use this structure in every prompt:
+
+1. **Context** -> where to work (repo, Jira key, Figma file)
+2. **Task** -> what you want (summary, checklist, code, tests)
+3. **Constraints** -> limits (read-only, short output, style guide)
+4. **Output format** -> bullet list, table, JSON, markdown
+
+Example:
+
+`Context: PROJ-101 in Jira. Task: write acceptance criteria and test cases. Constraints: no status change. Output: bullet list.`
+
+---
+
+## Do / Don't quick guide
+
+### Do
+- Use short, clear prompts
+- Start in read-only mode
+- Ask for approval before write actions
+- Save good prompts as reusable skills
+- Check logs weekly
+
+### Don't
+- Do not use admin tokens
+- Do not merge without review
+- Do not skip test/checklist steps
+- Do not ignore failed automations
+- Do not keep old skills without review
+
+---
+
 ## Step 1: Local setup commands
 
 ```bash
@@ -194,6 +227,18 @@ echo '[{"input":"PROJ-101","assert_contains":["Summary","Acceptance"]}]' > tests
 
 ---
 
+## Common errors and quick fixes
+
+| Error | What it means | Quick fix |
+|---|---|---|
+| 401 Unauthorized | Token wrong or expired | Create new token and update `.env` |
+| 403 Forbidden | No access to project/file | Ask for correct permission |
+| 404 Not Found | Wrong key/URL/workspace | Check Jira key, file key, repo/workspace |
+| Empty result | Query/filter too strict | Use wider query and test again |
+| MCP server missing in Cursor | `mcp.json` not loaded | Save file and restart Cursor |
+
+---
+
 ## Easy weekly team routine
 
 1. Monday: review top Jira tasks with Cursor.
@@ -207,6 +252,28 @@ Track these KPIs:
 - reopen rate
 - prompt reuse
 - automation success
+
+---
+
+## 5-minute daily routine (for every developer)
+
+1. **Minute 1:** Open top Jira task.
+2. **Minute 2:** Ask Cursor for task plan.
+3. **Minute 3:** Run PR quality/test checklist skill.
+4. **Minute 4:** Update status with safe prompt.
+5. **Minute 5:** Save one useful prompt to skill library.
+
+This small habit gives fast adoption.
+
+---
+
+## Trainer script (simple timing)
+
+- **0-10 min:** Demo Cursor + MCP connection.
+- **10-35 min:** Pair lab (Jira flow).
+- **35-55 min:** Pair lab (Figma or Bitbucket flow).
+- **55-75 min:** Build first skill together.
+- **75-90 min:** Troubleshooting using Common Errors slide + Q&A.
 
 ---
 

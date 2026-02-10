@@ -456,6 +456,140 @@ def create_roadmap_visual(path: Path) -> None:
     save_image(image, path)
 
 
+def create_prompt_formula_visual(path: Path) -> None:
+    image, draw = new_canvas("Prompt formula (use this every time)", accent=(73, 95, 188))
+
+    blocks = [
+        ("1) Context", ["What system?", "What ticket?", "What code area?"]),
+        ("2) Task", ["What do you want?", "Summary?", "Code?", "Checklist?"]),
+        ("3) Constraints", ["No write action", "Use style guide", "Keep output short"]),
+        ("4) Output format", ["Bullets", "Table", "JSON", "Commit message"]),
+    ]
+    x = 180
+    y = 340
+    w = 480
+    h = 640
+    gap = 80
+    colors = [(236, 246, 255), (236, 252, 243), (244, 240, 255), (255, 245, 236)]
+    for idx, (title, lines) in enumerate(blocks):
+        box = (x, y, x + w, y + h)
+        draw_card(draw, box, title, lines, fill_color=colors[idx])
+        if idx < len(blocks) - 1:
+            draw_arrow(draw, (x + w, y + h // 2), (x + w + gap - 20, y + h // 2), width=10)
+        x += w + gap
+
+    draw.rounded_rectangle((220, 1030, 2180, 1240), radius=20, fill=(236, 252, 243), outline=(124, 180, 148), width=4)
+    draw.text(
+        (280, 1092),
+        "Template: Context + Task + Constraints + Output format = better and repeatable results.",
+        font=load_font(40, bold=True),
+        fill=(28, 94, 62),
+    )
+
+    save_image(image, path)
+
+
+def create_do_dont_visual(path: Path) -> None:
+    image, draw = new_canvas("Do and Don't for safe adoption", accent=(27, 112, 162))
+
+    left_box = (160, 260, 1130, 1130)
+    right_box = (1270, 260, 2240, 1130)
+    draw.rounded_rectangle(left_box, radius=24, fill=(236, 252, 243), outline=(121, 178, 145), width=4)
+    draw.rounded_rectangle(right_box, radius=24, fill=(255, 240, 240), outline=(206, 141, 141), width=4)
+    draw.text((220, 320), "DO", font=load_font(64, bold=True), fill=(29, 96, 61))
+    draw.text((1330, 320), "DON'T", font=load_font(64, bold=True), fill=(145, 64, 64))
+
+    do_lines = [
+        "Use clear and short prompts.",
+        "Use read-only mode first.",
+        "Ask approval before write actions.",
+        "Save good prompts as skills.",
+        "Check logs and KPIs every week.",
+    ]
+    dont_lines = [
+        "Do not use admin tokens.",
+        "Do not auto-merge without review.",
+        "Do not skip test/checklist step.",
+        "Do not keep stale skills forever.",
+        "Do not hide failed automations.",
+    ]
+
+    y = 450
+    for line in do_lines:
+        draw.text((220, y), f"- {line}", font=load_font(40), fill=(30, 94, 61))
+        y += 125
+
+    y = 450
+    for line in dont_lines:
+        draw.text((1330, y), f"- {line}", font=load_font(40), fill=(145, 64, 64))
+        y += 125
+
+    save_image(image, path)
+
+
+def create_common_errors_visual(path: Path) -> None:
+    image, draw = new_canvas("Common errors and quick fixes", accent=(45, 98, 172))
+    draw.text((58, 178), "Use this slide during live training when someone gets blocked.", font=load_font(40), fill=(39, 60, 95))
+
+    columns = [150, 780, 1380, 2230]
+    top = 260
+    bottom = 1130
+    draw.rounded_rectangle((columns[0], top, columns[-1], bottom), radius=18, fill=(237, 246, 255), outline=(128, 160, 208), width=4)
+
+    headers = ["Error", "What it means", "Quick fix"]
+    for i in range(3):
+        draw.rectangle((columns[i], top, columns[i + 1], top + 100), fill=(77, 118, 187))
+        draw.text((columns[i] + 24, top + 28), headers[i], font=load_font(40, bold=True), fill=(255, 255, 255))
+
+    rows = [
+        ("401 Unauthorized", "Token is wrong or expired", "Create new token and update .env"),
+        ("403 Forbidden", "No access to project or file", "Ask for project/file permission"),
+        ("404 Not Found", "Wrong URL, key, or workspace", "Check project key, file key, repo name"),
+        ("Empty API result", "Filter is too strict", "Try wider query or remove filter"),
+        ("MCP not listed", "mcp.json not loaded", "Save file and restart Cursor"),
+    ]
+
+    y = top + 130
+    for err, meaning, fix in rows:
+        row_bottom = y + 145
+        draw.line((columns[0], row_bottom, columns[-1], row_bottom), fill=(154, 177, 216), width=2)
+        draw.text((columns[0] + 18, y + 30), err, font=load_font(34, bold=True), fill=(34, 54, 89))
+        draw.text((columns[1] + 18, y + 30), meaning, font=load_font(34), fill=(34, 54, 89))
+        draw.text((columns[2] + 18, y + 30), fix, font=load_font(34), fill=(34, 54, 89))
+        y += 145
+
+    save_image(image, path)
+
+
+def create_five_min_routine_visual(path: Path) -> None:
+    image, draw = new_canvas("5-minute daily routine (very easy)", accent=(20, 128, 145))
+    steps = [
+        ("Minute 1", "Open Jira list and pick top task"),
+        ("Minute 2", "Ask Cursor for quick plan"),
+        ("Minute 3", "Run PR/quality skill"),
+        ("Minute 4", "Update task status safely"),
+        ("Minute 5", "Save one useful prompt"),
+    ]
+    x = 200
+    y = 350
+    w = 380
+    h = 540
+    gap = 60
+    for idx, (minute, desc) in enumerate(steps):
+        box = (x, y, x + w, y + h)
+        draw.rounded_rectangle(box, radius=22, fill=(236, 247, 255), outline=(125, 157, 208), width=4)
+        draw.text((x + 46, y + 56), minute, font=load_font(48, bold=True), fill=(28, 51, 93))
+        draw.text((x + 36, y + 178), fill(desc, width=16), font=load_font(36), fill=(41, 61, 95))
+        if idx < len(steps) - 1:
+            draw_arrow(draw, (x + w, y + h // 2), (x + w + gap - 16, y + h // 2), width=9)
+        x += w + gap
+
+    draw.rounded_rectangle((260, 970, 2140, 1220), radius=18, fill=(236, 252, 243), outline=(126, 180, 149), width=3)
+    draw.text((320, 1040), "Small daily habit -> faster team adoption and better quality.", font=load_font(42, bold=True), fill=(29, 94, 62))
+
+    save_image(image, path)
+
+
 def generate_images() -> dict:
     ASSETS_DIR.mkdir(exist_ok=True)
     files = {
@@ -463,6 +597,10 @@ def generate_images() -> dict:
         "top_mcp": ASSETS_DIR / "top_mcp_tools.png",
         "top_skills": ASSETS_DIR / "top_agent_skills.png",
         "architecture": ASSETS_DIR / "simple_architecture.png",
+        "prompt_formula": ASSETS_DIR / "prompt_formula.png",
+        "do_dont": ASSETS_DIR / "do_dont.png",
+        "common_errors": ASSETS_DIR / "common_errors_fixes.png",
+        "five_min_routine": ASSETS_DIR / "five_min_routine.png",
         "settings_screen": ASSETS_DIR / "cursor_settings_screen.png",
         "mcp_json_screen": ASSETS_DIR / "cursor_mcp_json_screen.png",
         "status_screen": ASSETS_DIR / "cursor_status_screen.png",
@@ -476,6 +614,10 @@ def generate_images() -> dict:
     create_top_mcp_visual(files["top_mcp"])
     create_top_skills_visual(files["top_skills"])
     create_architecture_visual(files["architecture"])
+    create_prompt_formula_visual(files["prompt_formula"])
+    create_do_dont_visual(files["do_dont"])
+    create_common_errors_visual(files["common_errors"])
+    create_five_min_routine_visual(files["five_min_routine"])
     create_cursor_settings_screen(files["settings_screen"])
     create_cursor_mcp_json_screen(files["mcp_json_screen"])
     create_cursor_connection_status_screen(files["status_screen"])
@@ -609,9 +751,10 @@ def build_presentation(images: dict) -> None:
         [
             "Part A: Top MCP tools for development",
             "Part B: Top agent skills for developers",
-            "Part C: Step-by-step Cursor setup tutorial",
-            "Part D: Daily workflow your team can follow",
-            "Part E: Risk controls + 30-60-90 rollout plan",
+            "Part C: Prompt formula + Do/Don't quick guide",
+            "Part D: Step-by-step Cursor setup tutorial",
+            "Part E: Common errors and quick fixes",
+            "Part F: Daily routine + risk controls + roadmap",
         ],
         x=0.95,
         y=1.55,
@@ -668,7 +811,37 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["architecture"], x=5.95, y=1.23, w=7.15)
 
-    # 7) Tutorial map
+    # 7) Prompt formula
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Prompt formula cheat sheet")
+    add_bullets(
+        slide,
+        [
+            "Use this every time:",
+            ("Context: where and what", 1),
+            ("Task: what output you need", 1),
+            ("Constraints: limits and rules", 1),
+            ("Output format: bullet/table/json", 1),
+        ],
+    )
+    add_image(slide, images["prompt_formula"], x=5.95, y=1.23, w=7.15)
+
+    # 8) Do and Don't
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Do and Don't (simple rules)")
+    add_bullets(
+        slide,
+        [
+            "Use this for new team members:",
+            ("Do: read-only first, then safe write with approval", 1),
+            ("Do: save good prompts as skills", 1),
+            ("Don't: use admin tokens", 1),
+            ("Don't: auto-merge without review", 1),
+        ],
+    )
+    add_image(slide, images["do_dont"], x=5.95, y=1.23, w=7.15)
+
+    # 9) Tutorial map
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Tutorial map: follow these 8 steps")
     add_bullets(
@@ -682,7 +855,7 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["tutorial_path"], x=5.95, y=1.23, w=7.15)
 
-    # 8) Step 1 commands
+    # 10) Step 1 commands
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Step 1: Prepare local machine (copy and run)")
     add_code_block(
@@ -712,7 +885,7 @@ def build_presentation(images: dict) -> None:
         font_size=14,
     )
 
-    # 9) Step 2 screenshot
+    # 11) Step 2 screenshot
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Step 2: Open Cursor settings and go to MCP")
     add_bullets(
@@ -732,7 +905,7 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["settings_screen"], x=5.35, y=1.22, w=7.75)
 
-    # 10) Step 3 screenshot + config
+    # 12) Step 3 screenshot + config
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Step 3: Add mcp.json config in Cursor")
     add_bullets(
@@ -767,7 +940,7 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["mcp_json_screen"], x=5.95, y=1.22, w=7.15)
 
-    # 11) Step 4 token file
+    # 13) Step 4 token file
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Step 4: Add tokens in .env file")
     add_code_block(
@@ -805,7 +978,7 @@ def build_presentation(images: dict) -> None:
         level1_size=15,
     )
 
-    # 12) Step 5 Jira
+    # 14) Step 5 Jira
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Step 5: Test Jira connection")
     add_bullets(
@@ -825,7 +998,7 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["status_screen"], x=5.95, y=1.22, w=7.15)
 
-    # 13) Step 6 Figma
+    # 15) Step 6 Figma
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Step 6: Test Figma connection")
     add_code_block(
@@ -846,7 +1019,7 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["status_screen"], x=5.95, y=1.22, w=7.15)
 
-    # 14) Step 7 Bitbucket
+    # 16) Step 7 Bitbucket
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Step 7: Test Bitbucket connection")
     add_code_block(
@@ -867,7 +1040,7 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["status_screen"], x=5.95, y=1.22, w=7.15)
 
-    # 15) Step 8 skill creation
+    # 17) Step 8 skill creation
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Step 8: Build your first agent skill")
     add_code_block(
@@ -893,7 +1066,42 @@ def build_presentation(images: dict) -> None:
         font_size=14,
     )
 
-    # 16) Daily workflow
+    # 18) Common errors
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "Common errors and fixes (use in live training)")
+    add_bullets(
+        slide,
+        [
+            "Most common issues:",
+            ("401: token expired or wrong", 1),
+            ("403: missing project/file permission", 1),
+            ("404: wrong key or URL", 1),
+            ("MCP not showing: restart Cursor after save", 1),
+        ],
+        level0_size=20,
+        level1_size=16,
+    )
+    add_image(slide, images["common_errors"], x=5.95, y=1.23, w=7.15)
+
+    # 19) Five-minute routine
+    slide = prs.slides.add_slide(blank)
+    add_title_block(slide, "5-minute daily routine (adoption booster)")
+    add_bullets(
+        slide,
+        [
+            "Do this daily:",
+            ("Minute 1: pick top task", 1),
+            ("Minute 2: ask Cursor for plan", 1),
+            ("Minute 3: run quality skill", 1),
+            ("Minute 4: update status", 1),
+            ("Minute 5: save one useful prompt", 1),
+        ],
+        level0_size=20,
+        level1_size=16,
+    )
+    add_image(slide, images["five_min_routine"], x=5.95, y=1.23, w=7.15)
+
+    # 20) Daily workflow
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Daily workflow your team can follow")
     add_bullets(
@@ -907,7 +1115,7 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["daily_workflow"], x=5.95, y=1.23, w=7.15)
 
-    # 17) Risk controls
+    # 21) Risk controls
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Risk Management and Governance Controls (simple)")
     add_bullets(
@@ -922,7 +1130,7 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["risk_controls"], x=5.95, y=1.23, w=7.15)
 
-    # 18) Roadmap
+    # 22) Roadmap
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "30-60-90 day adoption roadmap")
     add_bullets(
@@ -936,7 +1144,7 @@ def build_presentation(images: dict) -> None:
     )
     add_image(slide, images["roadmap"], x=5.95, y=1.23, w=7.15)
 
-    # 19) Final checklist
+    # 23) Final checklist
     slide = prs.slides.add_slide(blank)
     add_title_block(slide, "Final checklist for trainer and team")
     add_bullets(
